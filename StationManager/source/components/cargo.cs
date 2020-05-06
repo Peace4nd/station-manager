@@ -214,10 +214,10 @@ namespace SpaceEngineers
                     {
                         dest = Ore.GetInventory(0);
                         // omezeni mnozstvi
-                        var maximum = CargoOre["Stone"][1] - CargoOre["Stone"][0];
-                        if ((float)items[i].Amount > maximum)
+                        MyFixedPoint maximum = (MyFixedPoint)(CargoOre["Stone"][1] - CargoOre["Stone"][0]);
+                        if (items[i].Amount > maximum)
                         {
-                            amount = (MyFixedPoint)maximum;
+                            amount = maximum;
                         }
                         else
                         {
@@ -237,9 +237,9 @@ namespace SpaceEngineers
                             dest = Ingot.GetInventory(0);
                             break;
                         case "MyObjectBuilder_Ore":
-                            if (items[i].Amount > 200000)
+                            if (items[i].Amount > Constants.MaximalOreAmount)
                             {
-                                amount = items[i].Amount - 200000;
+                                amount = items[i].Amount - Constants.MaximalOreAmount;
                                 dest = Thrower.GetInventory(0);
                             }
                             else
@@ -398,6 +398,10 @@ namespace SpaceEngineers
             {
                 TransferItems(block.GetInventory(0));
             }
+            // presortovani kontejneru
+            TransferItems(Component.GetInventory(0));
+            TransferItems(Ore.GetInventory(0));
+            TransferItems(Ingot.GetInventory(0));
             // vraceni 
             return this;
         }
@@ -468,21 +472,11 @@ namespace SpaceEngineers
         /// <returns></returns>
         public Cargo EnableRefineryControl()
         {
-
-
-            /*
-            Při automatizaci rafinerií nepřesouvat veškerou rudu, ale jen část (např. 2500) a náhodně je rozhazovat (podobně jako u montérů). Zohlednit jaké má rafinerie určené materiály.
-            */
-
             // rafinerie
             var refineries = PrepareProductionBlocks<IMyRefinery>(true);
             // nacteni dostupnych rud
             List<MyInventoryItem> items = new List<MyInventoryItem>();
             Ore.GetInventory(0).GetItems(items);
-
-
-
-
             // nacteni dostupnzch rud
             List<string> needed = new List<string>();
             foreach (var item in items)
@@ -491,45 +485,47 @@ namespace SpaceEngineers
             }
             // rozhozeni seznamu
             Tools.ShuffleList(needed);
-
-            
-
-            // RefineryAmount
-
-
-
-
-
-
-
-
-
-
-
-            // rozrazeni
-            for (int i = items.Count - 1; i >= 0; i--)
+            // rozhozeni do rafinerii
+            foreach (var ore in needed)
             {
                 // definice
-                var oreType = items[i].Type.SubtypeId;
-                float amount = (float)items[i].Amount;
+                var index = items.FindIndex(item => item.Type.SubtypeId == ore);
+                var amount = items[index].Amount;
                 List<IMyRefinery> selected;
-                // urceni prislusne rafinerie
-                if (refineries.ContainsKey(oreType))
+                MyFixedPoint transfer;
+                // rozhodnuti kam rudu presmerovat
+                if (refineries.ContainsKey(ore))
                 {
-                    selected = refineries[oreType];
+                    selected = refineries[ore];
                 }
                 else
                 {
                     selected = refineries["generic"];
                 }
-
-                // presun
-                MyFixedPoint transferAmount = (MyFixedPoint)Math.Round(amount / selected.Count, 0);
-                foreach (var block in selected)
+                // urceni prislusneho mnozstvi
+                if (amount > (Constants.RefineryAmount * selected.Count))
                 {
-                    if (!block.InputInventory.IsFull)
+                    transfer = Constants.RefineryAmount;
+                }
+                else
+                {
+                    transfer = (MyFixedPoint)Math.Floor((double)amount / selected.Count) - 1;
+                }
+                // presmerovani prislusneho mnozstvi
+                if (transfer > 0)
+                {
+                    foreach (var block in selected)
                     {
-                        Ore.GetInventory(0).TransferItemTo(block.InputInventory, i, null, true, transferAmount);
+                        // nacteni existujicich polozek
+                        List<MyInventoryItem> assigned = new List<MyInventoryItem>();
+                        block.InputInventory.GetItems(assigned);
+                        // overeni existence
+                        var exist = assigned.FindIndex(item => item.Type.SubtypeId == ore);
+                        // presun je-li to potreba
+                        if (!block.InputInventory.IsFull && exist == -1)
+                        {
+                            Ore.GetInventory(0).TransferItemTo(block.InputInventory, index, null, true, transfer);
+                        }
                     }
                 }
             }

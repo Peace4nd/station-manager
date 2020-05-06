@@ -149,5 +149,10 @@ namespace SpaceEngineers
         /// Zakladni mnozstvi rafinovane rudy
         /// </summary>
         public const int RefineryAmount = 1500;
+
+        /// <summary>
+        /// Maximalni limit rud
+        /// </summary>
+        public const int MaximalOreAmount = 200000;
     }
 }

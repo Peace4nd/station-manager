@@ -135,7 +135,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="names.txt" />
-    <Content Include="fragments.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
