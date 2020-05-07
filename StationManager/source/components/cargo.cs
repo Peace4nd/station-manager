@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using VRage.Game.ModAPI.Ingame;
 using System.Linq;
@@ -472,6 +472,7 @@ namespace SpaceEngineers
         /// <returns></returns>
         public Cargo EnableRefineryControl()
         {
+            // TODO: radit to podle "poptavky", tedy podle toho ceho je malo
             // rafinerie
             var refineries = PrepareProductionBlocks<IMyRefinery>(true);
             // nacteni dostupnych rud
@@ -491,7 +492,7 @@ namespace SpaceEngineers
                 // definice
                 var index = items.FindIndex(item => item.Type.SubtypeId == ore);
                 var amount = items[index].Amount;
-                List<IMyRefinery> selected;
+                List<IMyRefinery> selected = null;
                 MyFixedPoint transfer;
                 // rozhodnuti kam rudu presmerovat
                 if (refineries.ContainsKey(ore))
@@ -500,31 +501,38 @@ namespace SpaceEngineers
                 }
                 else
                 {
-                    selected = refineries["generic"];
-                }
-                // urceni prislusneho mnozstvi
-                if (amount > (Constants.RefineryAmount * selected.Count))
-                {
-                    transfer = Constants.RefineryAmount;
-                }
-                else
-                {
-                    transfer = (MyFixedPoint)Math.Floor((double)amount / selected.Count) - 1;
-                }
-                // presmerovani prislusneho mnozstvi
-                if (transfer > 0)
-                {
-                    foreach (var block in selected)
+                    if (refineries.ContainsKey("generic"))
                     {
-                        // nacteni existujicich polozek
-                        List<MyInventoryItem> assigned = new List<MyInventoryItem>();
-                        block.InputInventory.GetItems(assigned);
-                        // overeni existence
-                        var exist = assigned.FindIndex(item => item.Type.SubtypeId == ore);
-                        // presun je-li to potreba
-                        if (!block.InputInventory.IsFull && exist == -1)
+                        selected = refineries["generic"];
+                    }
+                }
+                // pokud je nejaka rafinerie
+                if (selected != null)
+                {
+                    // urceni prislusneho mnozstvi
+                    if (amount > (Constants.RefineryAmount * selected.Count))
+                    {
+                        transfer = Constants.RefineryAmount;
+                    }
+                    else
+                    {
+                        transfer = (MyFixedPoint)Math.Floor((double)amount / selected.Count) - 1;
+                    }
+                    // presmerovani prislusneho mnozstvi
+                    if (transfer > 0)
+                    {
+                        foreach (var block in selected)
                         {
-                            Ore.GetInventory(0).TransferItemTo(block.InputInventory, index, null, true, transfer);
+                            // nacteni existujicich polozek
+                            List<MyInventoryItem> assigned = new List<MyInventoryItem>();
+                            block.InputInventory.GetItems(assigned);
+                            // overeni existence
+                            var exist = assigned.FindIndex(item => item.Type.SubtypeId == ore);
+                            // presun je-li to potreba
+                            if (!block.InputInventory.IsFull && exist == -1)
+                            {
+                                Ore.GetInventory(0).TransferItemTo(block.InputInventory, index, null, true, transfer);
+                            }
                         }
                     }
                 }
@@ -678,24 +686,27 @@ namespace SpaceEngineers
             // logovani
             Debugger.Log("Assembler queue", needed);
             // zapinani/vypinani assembleru
-            foreach (var block in Instance.GetByType<IMyAssembler>())
+            if (needed.Count > 0)
             {
-                // nastaveni
-                block.Value.CooperativeMode = false;
-                block.Value.UseConveyorSystem = true;
-                // osetreni indexu
-                if (index > needed.Count - 1)
+                foreach (var block in Instance.GetByType<IMyAssembler>())
                 {
-                    index = 0;
+                    // nastaveni
+                    block.Value.CooperativeMode = false;
+                    block.Value.UseConveyorSystem = true;
+                    // osetreni indexu
+                    if (index > needed.Count - 1)
+                    {
+                        index = 0;
+                    }
+                    // vlozeni blueprintu do fronty (pouze pokud je prazdna
+                    if (block.Value.IsQueueEmpty)
+                    {
+                        var blueprint = MyDefinitionId.Parse("MyObjectBuilder_BlueprintDefinition/" + needed[index]);
+                        block.Value.AddQueueItem(blueprint, (MyFixedPoint)100);
+                    }
+                    // zvyseni indexu
+                    index++;
                 }
-                // vlozeni blueprintu do fronty (pouze pokud je prazdna
-                if (block.Value.IsQueueEmpty)
-                {
-                    var blueprint = MyDefinitionId.Parse("MyObjectBuilder_BlueprintDefinition/" + needed[index]);
-                    block.Value.AddQueueItem(blueprint, (MyFixedPoint)100);
-                }
-                // zvyseni indexu
-                index++;
             }
             //vraceni
             return this;

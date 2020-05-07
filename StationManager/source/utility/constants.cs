@@ -51,7 +51,7 @@ namespace SpaceEngineers
             {"RadioCommunication", 100},
             {"Reactor", 100},
             {"SolarCell", 100},
-            {"Thrust", 100},
+            {"Thrust", 1000},
             {"Superconductor", 1000},
             // ingoty
             {"Stone", 7500},
@@ -137,7 +137,8 @@ namespace SpaceEngineers
             {"Computer", "ComputerComponent"},
             {"Display", "Display"},
             {"Motor", "MotorComponent"},
-            {"BulletproofGlass", "BulletproofGlass"}
+            {"BulletproofGlass", "BulletproofGlass"},
+            {"Thrust", "ThrustComponent"}
         };
 
         /// <summary>
