@@ -42,7 +42,16 @@ namespace SpaceEngineers
         /// <param name="message"></param>
         public static void Error(string message)
         {
-            Echo("ERROR: " + message + "\n");
+            Log(">>> ERROR: " + message);
+        }
+
+        /// <summary>
+        /// Varovani
+        /// </summary>
+        /// <param name="message"></param>
+        public static void Warning(string message)
+        {
+            Log(">>> WARNING: " + message);
         }
 
         /// <summary>

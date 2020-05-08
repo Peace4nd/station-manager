@@ -65,9 +65,10 @@ namespace SpaceEngineers
             {"Platinum", 7500},
             {"Uranium", 2500},
             {"Ice", 50000},
+            // naboje
+            {"NATO_25x184mm", 100},
             // shits
             {"NATO_5p56x45mm", -1},
-            {"NATO_25x184mm", -1},
             {"Missile200mm", -1},
             {"AngleGrinderItem", -1},
             {"AngleGrinder2Item", -1},
@@ -149,7 +150,7 @@ namespace SpaceEngineers
         /// <summary>
         /// Zakladni mnozstvi rafinovane rudy
         /// </summary>
-        public const int RefineryAmount = 1500;
+        public const int RefineryAmount = 1000;
 
         /// <summary>
         /// Maximalni limit rud

@@ -90,12 +90,14 @@ namespace SpaceEngineers
                     if (amount > 0)
                     {
                         // ziskani referencni hodnoty
-                        int reference;
-                        Constants.AmountReference.TryGetValue(type, out reference);
-                        // pokud neexistuje prida se nula
-                        if (reference == 0 && !Constants.AmountReference.ContainsKey(type))
+                        int reference = 0;
+                        if (Constants.AmountReference.ContainsKey(type))
                         {
-                            Constants.AmountReference.Add(type, 0);
+                            reference = Constants.AmountReference[type];
+                        }
+                        else
+                        {
+                            Debugger.Warning("Unknown type '" + type + "'");
                         }
                         // zarazeni do seznamu 
                         if (reference != -1)
@@ -185,7 +187,7 @@ namespace SpaceEngineers
             // sestaveni
             foreach (var item in items)
             {
-                itemList.Add(Formater.BarsWithAmount(item.Key, item.Value[0], item.Value[0]));
+                itemList.Add(Formater.BarsWithAmount(item.Key, item.Value[0], item.Value[1]));
             }
             // vraceni
             return itemList;
@@ -207,36 +209,41 @@ namespace SpaceEngineers
                 // misto urceni 
                 IMyInventory dest = null;
                 MyFixedPoint amount = 0;
-                // s sutrem se zachazi specificky
-                if (items[i].Type.SubtypeId == "Stone")
+                string type = items[i].Type.TypeId;
+                string subtype = items[i].Type.SubtypeId;
+                // zpracovani dle typu
+                switch (type)
                 {
-                    if (CargoOre.ContainsKey("Stone") && CargoOre["Stone"][0] < CargoOre["Stone"][1])
-                    {
-                        dest = Ore.GetInventory(0);
-                        // omezeni mnozstvi
-                        MyFixedPoint maximum = (MyFixedPoint)(CargoOre["Stone"][1] - CargoOre["Stone"][0]);
-                        if (items[i].Amount > maximum)
+                    case "MyObjectBuilder_Ingot":
+                        dest = Ingot.GetInventory(0);
+                        break;
+                    case "MyObjectBuilder_Ore":
+                        // se sutrem se zachazi specificky
+                        if (subtype == "Stone")
                         {
-                            amount = maximum;
+                            if (CargoOre.ContainsKey("Stone"))
+                            {
+                                // definice
+                                MyFixedPoint needed = (MyFixedPoint)(CargoOre["Stone"][1] - CargoOre["Stone"][0]);
+                                // kam s nim
+                                if (needed <= 0)
+                                {
+                                    dest = Thrower.GetInventory(0);
+                                }
+                                else
+                                {
+                                    dest = Ore.GetInventory(0);
+                                    amount = needed;
+                                }
+                            }
+                            else
+                            {
+                                dest = Ore.GetInventory(0);
+                                amount = items[i].Amount >= (MyFixedPoint)CargoOre["Stone"][1] ? (MyFixedPoint)CargoOre["Stone"][1] : items[i].Amount;
+                            }
                         }
                         else
                         {
-                            amount = items[i].Amount;
-                        }
-                    }
-                    else
-                    {
-                        dest = Thrower.GetInventory(0);
-                    }
-                }
-                else
-                {
-                    switch (items[i].Type.TypeId)
-                    {
-                        case "MyObjectBuilder_Ingot":
-                            dest = Ingot.GetInventory(0);
-                            break;
-                        case "MyObjectBuilder_Ore":
                             if (items[i].Amount > Constants.MaximalOreAmount)
                             {
                                 amount = items[i].Amount - Constants.MaximalOreAmount;
@@ -246,18 +253,18 @@ namespace SpaceEngineers
                             {
                                 dest = Ore.GetInventory(0);
                             }
-                            break;
-                        default:
-                            if (items[i].Type.SubtypeId == "Scrap")
-                            {
-                                dest = Ore.GetInventory(0);
-                            }
-                            else
-                            {
-                                dest = Component.GetInventory(0);
-                            }
-                            break;
-                    }
+                        }
+                        break;
+                    default:
+                        if (subtype == "Scrap")
+                        {
+                            dest = Ore.GetInventory(0);
+                        }
+                        else
+                        {
+                            dest = Component.GetInventory(0);
+                        }
+                        break;
                 }
                 //presun 
                 if (dest != null && !dest.IsFull)
@@ -472,56 +479,44 @@ namespace SpaceEngineers
         /// <returns></returns>
         public Cargo EnableRefineryControl()
         {
-            // TODO: radit to podle "poptavky", tedy podle toho ceho je malo
-            // rafinerie
+            // definice
             var refineries = PrepareProductionBlocks<IMyRefinery>(true);
+            Random random = new Random();
             // nacteni dostupnych rud
             List<MyInventoryItem> items = new List<MyInventoryItem>();
             Ore.GetInventory(0).GetItems(items);
-            // nacteni dostupnzch rud
+            // nacteni dostupnych rud
             List<string> needed = new List<string>();
             foreach (var item in items)
             {
                 needed.Add(item.Type.SubtypeId);
             }
-            // rozhozeni seznamu
-            Tools.ShuffleList(needed);
-            // rozhozeni do rafinerii
-            foreach (var ore in needed)
+            // prochazeni typu rafinerii
+            foreach (var refinery in refineries)
             {
-                // definice
-                var index = items.FindIndex(item => item.Type.SubtypeId == ore);
-                var amount = items[index].Amount;
-                List<IMyRefinery> selected = null;
-                MyFixedPoint transfer;
-                // rozhodnuti kam rudu presmerovat
-                if (refineries.ContainsKey(ore))
+                // jednotlive rafinerie
+                foreach (var block in refinery.Value)
                 {
-                    selected = refineries[ore];
-                }
-                else
-                {
-                    if (refineries.ContainsKey("generic"))
+                    // definice
+                    var ore = refinery.Key == "generic" ? needed[random.Next(needed.Count)] : refinery.Key;
+                    var index = items.FindIndex(item => item.Type.SubtypeId == ore);
+                    // pokud dana ruda existuje
+                    if (index >= 0)
                     {
-                        selected = refineries["generic"];
-                    }
-                }
-                // pokud je nejaka rafinerie
-                if (selected != null)
-                {
-                    // urceni prislusneho mnozstvi
-                    if (amount > (Constants.RefineryAmount * selected.Count))
-                    {
-                        transfer = Constants.RefineryAmount;
-                    }
-                    else
-                    {
-                        transfer = (MyFixedPoint)Math.Floor((double)amount / selected.Count) - 1;
-                    }
-                    // presmerovani prislusneho mnozstvi
-                    if (transfer > 0)
-                    {
-                        foreach (var block in selected)
+                        // definice
+                        var amount = items[index].Amount;
+                        MyFixedPoint transfer;
+                        // urceni prislusneho mnozstvi
+                        if (amount > (Constants.RefineryAmount * refinery.Value.Count))
+                        {
+                            transfer = Constants.RefineryAmount;
+                        }
+                        else
+                        {
+                            transfer = (MyFixedPoint)Math.Floor((double)amount / refinery.Value.Count) - 1;
+                        }
+                        // presmerovani prislusneho mnozstvi
+                        if (transfer > 0)
                         {
                             // nacteni existujicich polozek
                             List<MyInventoryItem> assigned = new List<MyInventoryItem>();
