@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineers
 {
@@ -22,7 +21,7 @@ namespace SpaceEngineers
             {
                 int k = (rnd.Next(0, n) % n);
                 n--;
-                var value = list[k];
+                string value = list[k];
                 list[k] = list[n];
                 list[n] = value;
             }

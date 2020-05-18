@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Sandbox.ModAPI.Ingame;
+using System;
 using System.Collections.Generic;
-using VRageMath;
-using Sandbox.ModAPI.Ingame;
-using Sandbox.ModAPI.Interfaces;
 using System.Linq;
+using VRage.Game.GUI.TextPanel;
+using VRageMath;
 
 namespace SpaceEngineers
 {
@@ -38,22 +38,40 @@ namespace SpaceEngineers
         private static Block Instance = null;
 
         /// <summary>
+        /// Siroky panel
+        /// </summary>
+        private readonly bool Wide = true;
+
+        /// <summary>
+        /// Vypocteny pocet radku
+        /// </summary>
+        private double CalculatedRows = 0;
+
+        /// <summary>
+        /// Dostupne panely
+        /// </summary>
+        private List<IMyTextSurface> Panels;
+
+        /// <summary>
         /// Konstruktor
         /// </summary>
         /// <param name="block">Blok</param>
-        public Display(string block)
+        /// <param name="small"></param>
+        public Display(string block, bool small)
         {
             Instance = new Block(block);
+            Wide = !small;
         }
 
         /// <summary>
         /// Staticky konstruktor
         /// </summary>
         /// <param name="block"></param>
+        /// <param name="small"></param>
         /// <returns></returns>
-        public static Display Create(string block)
+        public static Display Create(string block, bool small = false)
         {
-            return new Display(block);
+            return new Display(block, small);
         }
 
         /// <summary>
@@ -62,7 +80,14 @@ namespace SpaceEngineers
         /// <returns></returns>
         private double CalculateColumns()
         {
-            return Math.Floor(Constants.PanelColumns / FontSize);
+            if (Wide)
+            {
+                return Math.Floor(Constants.PanelColumnsWide / FontSize);
+            }
+            else
+            {
+                return Math.Floor(Constants.PanelColumnsSmall / FontSize);
+            }
         }
 
         /// <summary>
@@ -79,25 +104,56 @@ namespace SpaceEngineers
         /// </summary>
         /// <param name="line"></param>
         /// <param name="width"></param>
-        private void Columns(string[] line, double[] width)
+        private void Columns(string[] lines, double[] width)
         {
             // definice
             string output = string.Empty;
             // sestaveni
-            for (var i = 0; i < line.Length; i++)
+            for (int i = 0; i < lines.Length; i++)
             {
-                var fill = width[i] - line[i].Length;
-                if (i != line.Length - 1)
+                double fill = width[i] - lines[i].Length;
+                if (i != lines.Length - 1)
                 {
-                    output += line[i] + new string(' ', (int)(fill - 2)) + "│ ";
+                    int corectFill = (int)fill - 2;
+                    if (fill - 2 >= 0)
+                    {
+                        output += lines[i] + new string(' ', corectFill) + "│ ";
+                    }
+                    else
+                    {
+                        output += lines[i].Substring(0, lines[i].Length + corectFill) + "│ ";
+                    }
                 }
                 else
                 {
-                    output += line[i] + new string(' ', (int)fill);
+                    output += lines[i] + new string(' ', (int)fill);
                 }
             }
             // vypis na display
             Line(output);
+        }
+
+        /// <summary>
+        /// Textovy panel
+        /// </summary>
+        /// <returns></returns>
+        public Display Text()
+        {
+            CalculatedRows = CalculateRows();
+            Panels = Instance.GetByType<IMyTextPanel>().Values.ToList<IMyTextSurface>();
+            return this;
+        }
+
+        /// <summary>
+        /// Panel kokpitu
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <returns></returns>
+        public Display Cocpit(int surface = 0)
+        {
+            CalculatedRows = CalculateRows();
+            Panels = new List<IMyTextSurface>() { Instance.GetByType<IMyCockpit>().Values.First().GetSurface(surface) };
+            return this;
         }
 
         /// <summary> 
@@ -180,6 +236,25 @@ namespace SpaceEngineers
             return this;
         }
 
+        /// <summary>
+        /// Zobrazeni upozorneni
+        /// </summary>
+        /// <param name="enabled"></param>
+        /// <returns></returns>
+        public Display Alert(bool enabled)
+        {
+            if (enabled)
+            {
+                Panels[PanelCounter].AddImageToSelection("Danger");
+                Panels[PanelCounter].PreserveAspectRatio = true;
+            }
+            else
+            {
+                Panels[PanelCounter].ClearImagesFromSelection();
+            }
+            return this;
+        }
+
         /// <summary> 
         /// Vypis radky textu 
         /// </summary> 
@@ -188,24 +263,21 @@ namespace SpaceEngineers
         public Display Line(string text)
         {
             // definice panelu 
-            if (RowCounter == CalculateRows())
+            if (RowCounter == CalculatedRows)
             {
                 RowCounter = 0;
                 PanelCounter++;
             }
-            // definice
-            var panels = Instance.GetByType<IMyTextPanel>();
-            var names = Instance.Keys;
             // zapis do panelu 
-            if (PanelCounter < Instance.Count)
+            if (PanelCounter < Panels.Count)
             {
                 // zkratka
-                var panel = panels[names[PanelCounter]];
+                IMyTextSurface panel = Panels[PanelCounter];
                 // nastaveni a zapis
-                panel.SetValue("FontSize", FontSize);
-                panel.SetValue("FontColor", FontColor);
-                panel.SetValue("Font", Constants.FontFamily);
-                panel.SetValue("Content", Constants.PanelContent);
+                panel.FontSize = FontSize;
+                panel.FontColor = FontColor;
+                panel.Font = "Monospace";
+                panel.ContentType = ContentType.TEXT_AND_IMAGE;
                 panel.WriteText(text + "\n", true);
                 // multipanel
                 RowCounter++;
@@ -220,7 +292,7 @@ namespace SpaceEngineers
         /// <returns></returns>
         public Display Lines(List<string> text)
         {
-            foreach (var line in text)
+            foreach (string line in text)
             {
                 Line(line);
             }
@@ -251,11 +323,11 @@ namespace SpaceEngineers
         /// </summary> 
         public Display Clear()
         {
-            foreach (var block in Instance.GetByType<IMyTextPanel>())
+            foreach (IMyTextSurface panel in Panels)
             {
-                block.Value.SetValue("Font", Constants.FontFamily);
-                block.Value.SetValue("Content", Constants.PanelContent);
-                block.Value.WriteText("", false);
+                panel.Font = "Monospace";
+                panel.ContentType = ContentType.TEXT_AND_IMAGE;
+                panel.WriteText("", false);
             }
             return this;
         }
@@ -275,13 +347,16 @@ namespace SpaceEngineers
                 throw new Exception("E-FT-01: Sum of all column width must be exactly 100");
             }
             // definice
-            var maximum = CalculateColumns();
-            var width = table.Width.Select(w => Math.Round((w / 100) * maximum)).ToArray();
+            double maximum = CalculateColumns();
+            double[] width = table.Width.Select(w => Math.Round((w / 100) * maximum)).ToArray();
             // hlavicka
-            Columns(table.Header, width);
-            Ruler(true);
+            if (table.HasHeader())
+            {
+                Columns(table.Header, width);
+                Ruler(true);
+            }
             // tabulka
-            foreach (var line in table.Rows)
+            foreach (string[] line in table.Rows)
             {
                 Columns(line, width);
             }

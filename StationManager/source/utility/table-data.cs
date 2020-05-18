@@ -46,5 +46,14 @@ namespace SpaceEngineers
         {
             return new TableData(header, rows, width);
         }
+
+        /// <summary>
+        /// Overeni ze existuje hlavicka
+        /// </summary>
+        /// <returns></returns>
+        public bool HasHeader()
+        {
+            return Header != null && Header.Length > 0;
+        }
     }
 }

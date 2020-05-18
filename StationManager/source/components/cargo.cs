@@ -1,10 +1,10 @@
+using Sandbox.ModAPI.Ingame;
 using System;
 using System.Collections.Generic;
-using VRage.Game.ModAPI.Ingame;
 using System.Linq;
 using VRage;
-using Sandbox.ModAPI.Ingame;
 using VRage.Game;
+using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineers
 {
@@ -49,6 +49,11 @@ namespace SpaceEngineers
         private IMyCargoContainer Ore = null;
 
         /// <summary> 
+        /// Rudy 
+        /// </summary> 
+        private IMyCargoContainer Ice = null;
+
+        /// <summary> 
         /// Komponenty 
         /// </summary> 
         private IMyCargoContainer Component = null;
@@ -81,7 +86,7 @@ namespace SpaceEngineers
         {
             if (items.Count > 0)
             {
-                foreach (var item in items)
+                foreach (MyInventoryItem item in items)
                 {
                     // polozka
                     string type = item.Type.SubtypeId;
@@ -149,7 +154,7 @@ namespace SpaceEngineers
         {
             try
             {
-                foreach (var block in Instance.GetAll())
+                foreach (KeyValuePair<string, IMyTerminalBlock> block in Instance.GetAll())
                 {
                     List<MyInventoryItem> items = new List<MyInventoryItem>();
                     if (block.Value is IMyCargoContainer)
@@ -167,6 +172,11 @@ namespace SpaceEngineers
                         (block.Value as IMyRefinery).InputInventory.GetItems(items);
                         LoadAmount(items);
                     }
+                    else if (block.Value is IMyShipDrill)
+                    {
+                        (block.Value as IMyShipDrill).GetInventory(0).GetItems(items);
+                        LoadAmount(items);
+                    }
                 }
             }
             catch (Exception ex)
@@ -179,15 +189,25 @@ namespace SpaceEngineers
         ///  Priprava vypisu
         /// </summary>
         /// <param name="items">Polozky</param>
+        /// <param name="simple">Zjednoduseny vypis</param>
+        /// <param name="referenceOverride">Externi referencni hodnota</param>
         /// <returns></returns>
-        private List<string> BuildItemList(Dictionary<String, float[]> items)
+        private List<string> BuildItemList(Dictionary<string, float[]> items, bool simple, double referenceOverride = -1)
         {
             // definice
             List<string> itemList = new List<string>();
             // sestaveni
-            foreach (var item in items)
+            foreach (KeyValuePair<string, float[]> item in items)
             {
-                itemList.Add(Formater.BarsWithAmount(item.Key, item.Value[0], item.Value[1]));
+                if (simple)
+                {
+                    itemList.Add(item.Key + " => " + Formater.Amount(item.Value[0]));
+                }
+                else
+                {
+                    itemList.Add(Formater.BarsWithAmount(item.Key, item.Value[0], referenceOverride > -1 ? referenceOverride : item.Value[1]));
+                }
+
             }
             // vraceni
             return itemList;
@@ -197,7 +217,7 @@ namespace SpaceEngineers
         /// Presun polozek inventare
         /// </summary> 
         /// <param name="inventory">Zdrojovy inventar</param> 
-        private void TransferItems(IMyInventory inventory)
+        private void TransferItems(IMyInventory inventory, bool onlyThrow = false)
         {
             // definice
             List<MyInventoryItem> items = new List<MyInventoryItem>();
@@ -211,60 +231,72 @@ namespace SpaceEngineers
                 MyFixedPoint amount = 0;
                 string type = items[i].Type.TypeId;
                 string subtype = items[i].Type.SubtypeId;
-                // zpracovani dle typu
-                switch (type)
+                // pouze vyhozeni sutru
+                if (onlyThrow && type == "MyObjectBuilder_Ore" && subtype == "Stone")
                 {
-                    case "MyObjectBuilder_Ingot":
-                        dest = Ingot.GetInventory(0);
-                        break;
-                    case "MyObjectBuilder_Ore":
-                        // se sutrem se zachazi specificky
-                        if (subtype == "Stone")
-                        {
-                            if (CargoOre.ContainsKey("Stone"))
+                    dest = Thrower.GetInventory(0);
+                }
+                else
+                {
+                    // zpracovani dle typu
+                    switch (type)
+                    {
+                        case "MyObjectBuilder_Ingot":
+                            dest = Ingot.GetInventory(0);
+                            break;
+                        case "MyObjectBuilder_Ore":
+                            // se sutrem se zachazi specificky
+                            if (subtype == "Stone")
                             {
-                                // definice
-                                MyFixedPoint needed = (MyFixedPoint)(CargoOre["Stone"][1] - CargoOre["Stone"][0]);
-                                // kam s nim
-                                if (needed <= 0)
+                                if (CargoOre.ContainsKey("Stone"))
                                 {
+                                    // definice
+                                    MyFixedPoint needed = (MyFixedPoint)(CargoOre["Stone"][1] - CargoOre["Stone"][0]);
+                                    // kam s nim
+                                    if (needed <= 0)
+                                    {
+                                        dest = Thrower.GetInventory(0);
+                                    }
+                                    else
+                                    {
+                                        dest = Ore.GetInventory(0);
+                                        amount = needed;
+                                    }
+                                }
+                                else
+                                {
+                                    dest = Ore.GetInventory(0);
+                                    amount = items[i].Amount >= Constants.AmountReference["Stone"] ? Constants.AmountReference["Stone"] : items[i].Amount;
+                                }
+                            }
+                            else if (subtype == "Ice")
+                            {
+                                dest = Ice.GetInventory(0);
+                            }
+                            else
+                            {
+                                if (items[i].Amount > Constants.MaximalOreAmount && subtype != "Ice")
+                                {
+                                    amount = items[i].Amount - Constants.MaximalOreAmount;
                                     dest = Thrower.GetInventory(0);
                                 }
                                 else
                                 {
                                     dest = Ore.GetInventory(0);
-                                    amount = needed;
                                 }
                             }
-                            else
-                            {
-                                dest = Ore.GetInventory(0);
-                                amount = items[i].Amount >= (MyFixedPoint)CargoOre["Stone"][1] ? (MyFixedPoint)CargoOre["Stone"][1] : items[i].Amount;
-                            }
-                        }
-                        else
-                        {
-                            if (items[i].Amount > Constants.MaximalOreAmount)
-                            {
-                                amount = items[i].Amount - Constants.MaximalOreAmount;
-                                dest = Thrower.GetInventory(0);
-                            }
-                            else
+                            break;
+                        default:
+                            if (subtype == "Scrap")
                             {
                                 dest = Ore.GetInventory(0);
                             }
-                        }
-                        break;
-                    default:
-                        if (subtype == "Scrap")
-                        {
-                            dest = Ore.GetInventory(0);
-                        }
-                        else
-                        {
-                            dest = Component.GetInventory(0);
-                        }
-                        break;
+                            else
+                            {
+                                dest = Component.GetInventory(0);
+                            }
+                            break;
+                    }
                 }
                 //presun 
                 if (dest != null && !dest.IsFull)
@@ -290,15 +322,15 @@ namespace SpaceEngineers
             // definice
             Dictionary<string, List<T>> blocks = new Dictionary<string, List<T>>();
             // nalezeni bloku 
-            foreach (var block in Instance.GetByType<T>())
+            foreach (KeyValuePair<string, T> block in Instance.GetByType<T>())
             {
                 // sestaveni mapy
                 if (block.Value.CustomData.Length > 0)
                 {
                     // priprava zpracovavanych polozek
-                    var items = block.Value.CustomData.Split('\n').Select(i => i.Trim()).ToArray();
+                    string[] items = block.Value.CustomData.Split('\n').Select(i => i.Trim()).ToArray();
                     // sestaveni
-                    foreach (var item in items)
+                    foreach (string item in items)
                     {
                         if (blocks.ContainsKey(item))
                         {
@@ -339,27 +371,27 @@ namespace SpaceEngineers
         /// Seznam komponentu 
         /// </summary> 
         /// <returns>Seznam komponentu</returns> 
-        public List<string> GetComponentList()
+        public List<string> GetComponentList(bool simple = false)
         {
-            return BuildItemList(CargoComponent);
+            return BuildItemList(CargoComponent, simple);
         }
 
         /// <summary> 
         /// Seznam materialu 
         /// </summary> 
         /// <returns>Seznam materialu</returns> 
-        public List<string> GetIngotList()
+        public List<string> GetIngotList(bool simple = false)
         {
-            return BuildItemList(CargoIngot);
+            return BuildItemList(CargoIngot, simple);
         }
 
         /// <summary> 
         /// Seznam rud 
         /// </summary> 
         /// <returns>Seznam rud</returns> 
-        public List<string> GetOreList()
+        public List<string> GetOreList(bool simple = false)
         {
-            return BuildItemList(CargoOre);
+            return BuildItemList(CargoOre, simple, Constants.MaximalOreAmount);
         }
 
         /// <summary> 
@@ -374,10 +406,11 @@ namespace SpaceEngineers
             Component = Instance.GetListByName<IMyCargoContainer>("_Component", true).First();
             Ingot = Instance.GetListByName<IMyCargoContainer>("_Ingot", true).First();
             Ore = Instance.GetListByName<IMyCargoContainer>("_Ore", true).First();
+            Ice = Instance.GetListByName<IMyCargoContainer>("_Ice", true).First();
             // aktivace vyhazovace
             Thrower.ThrowOut = true;
             // vycucnuti zasob z konektoru, rafinerii a monteru
-            foreach (var block in Instance.GetAll())
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Instance.GetAll())
             {
                 // konektory 
                 if (block.Value is IMyShipConnector && !block.Key.Contains("_Thrower"))
@@ -393,6 +426,7 @@ namespace SpaceEngineers
                 if (block.Value is IMyRefinery)
                 {
                     TransferItems((block.Value as IMyRefinery).OutputInventory);
+                    //TransferItems((block.Value as IMyRefinery).InputInventory, true);
                 }
                 // monteri 
                 if (block.Value is IMyAssembler)
@@ -401,7 +435,7 @@ namespace SpaceEngineers
                 }
             }
             // serazovaci sklad 
-            foreach (var block in Sorter)
+            foreach (IMyCargoContainer block in Sorter)
             {
                 TransferItems(block.GetInventory(0));
             }
@@ -430,7 +464,7 @@ namespace SpaceEngineers
             Component.GetInventory(0).GetItems(components);
             Cache.GetInventory(0).GetItems(cache);
             // premapovani nakesovanych polozek
-            foreach (var item in cache)
+            foreach (MyInventoryItem item in cache)
             {
                 cached.Add(item.Type.SubtypeId, item.Amount);
             }
@@ -438,10 +472,10 @@ namespace SpaceEngineers
             for (int i = components.Count - 1; i >= 0; i--)
             {
                 // definice
-                var localType = components[i].Type.SubtypeId;
-                var localAmount = components[i].Amount;
+                string localType = components[i].Type.SubtypeId;
+                MyFixedPoint localAmount = components[i].Amount;
                 // pokud se nejedna o nezadouci polozku a zaroven u v kesi neexistuje
-                if (Constants.AmountReference.ContainsKey(localType))
+                if (Constants.ComponentsToCache.Contains(localType))
                 {
                     if (cached.ContainsKey(localType))
                     {
@@ -480,31 +514,31 @@ namespace SpaceEngineers
         public Cargo EnableRefineryControl()
         {
             // definice
-            var refineries = PrepareProductionBlocks<IMyRefinery>(true);
+            Dictionary<string, List<IMyRefinery>> refineries = PrepareProductionBlocks<IMyRefinery>(true);
             Random random = new Random();
             // nacteni dostupnych rud
             List<MyInventoryItem> items = new List<MyInventoryItem>();
             Ore.GetInventory(0).GetItems(items);
             // nacteni dostupnych rud
             List<string> needed = new List<string>();
-            foreach (var item in items)
+            foreach (MyInventoryItem item in items)
             {
                 needed.Add(item.Type.SubtypeId);
             }
             // prochazeni typu rafinerii
-            foreach (var refinery in refineries)
+            foreach (KeyValuePair<string, List<IMyRefinery>> refinery in refineries)
             {
                 // jednotlive rafinerie
-                foreach (var block in refinery.Value)
+                foreach (IMyRefinery block in refinery.Value)
                 {
                     // definice
-                    var ore = refinery.Key == "generic" ? needed[random.Next(needed.Count)] : refinery.Key;
-                    var index = items.FindIndex(item => item.Type.SubtypeId == ore);
+                    string ore = refinery.Key == "generic" ? needed[random.Next(needed.Count)] : refinery.Key;
+                    int index = items.FindIndex(item => item.Type.SubtypeId == ore);
                     // pokud dana ruda existuje
                     if (index >= 0)
                     {
                         // definice
-                        var amount = items[index].Amount;
+                        MyFixedPoint amount = items[index].Amount;
                         MyFixedPoint transfer;
                         // urceni prislusneho mnozstvi
                         if (amount > (Constants.RefineryAmount * refinery.Value.Count))
@@ -522,7 +556,7 @@ namespace SpaceEngineers
                             List<MyInventoryItem> assigned = new List<MyInventoryItem>();
                             block.InputInventory.GetItems(assigned);
                             // overeni existence
-                            var exist = assigned.FindIndex(item => item.Type.SubtypeId == ore);
+                            int exist = assigned.FindIndex(item => item.Type.SubtypeId == ore);
                             // presun je-li to potreba
                             if (!block.InputInventory.IsFull && exist == -1)
                             {
@@ -545,7 +579,7 @@ namespace SpaceEngineers
             // definice
             List<string[]> ovreview = new List<string[]>();
             // nalezeni bloku 
-            foreach (var block in Instance.GetByType<IMyRefinery>())
+            foreach (KeyValuePair<string, IMyRefinery> block in Instance.GetByType<IMyRefinery>())
             {
                 // definice
                 List<MyInventoryItem> items = new List<MyInventoryItem>();
@@ -587,10 +621,21 @@ namespace SpaceEngineers
         /// <returns></returns>
         public TableData GetAssemblesOverview()
         {
+            bool stucked;
+            return GetAssemblesOverview(out stucked);
+        }
+
+        /// <summary>
+        /// Prehled o praci assembleru
+        /// </summary>
+        /// <returns></returns>
+        public TableData GetAssemblesOverview(out bool stucked)
+        {
             // definice
             List<string[]> ovreview = new List<string[]>();
+            int localStuck = 0;
             // nalezeni bloku 
-            foreach (var block in Instance.GetByType<IMyAssembler>())
+            foreach (KeyValuePair<string, IMyAssembler> block in Instance.GetByType<IMyAssembler>())
             {
                 // definice
                 List<MyProductionItem> items = new List<MyProductionItem>();
@@ -599,6 +644,9 @@ namespace SpaceEngineers
                 // sestaveni prehledu
                 if (items.Count > 0)
                 {
+                    // detekce zaseknuti
+                    localStuck = Math.Max(localStuck, items.Count > 0 && !block.Value.IsProducing ? 1 : 0);
+                    // prirazeni   
                     ovreview.Add(new string[] {
                         Block.GetName(block.Value),
                         block.Value.IsProducing ? Status.Working : Status.Stuck,
@@ -616,6 +664,8 @@ namespace SpaceEngineers
                     });
                 }
             }
+            // zaseknuti
+            stucked = localStuck == 1 ? true : false;
             // sestaveni a vraceni
             return TableData.Create(
                 new string[] { "Name", "Status", "Queue", "Qty" },
@@ -628,27 +678,31 @@ namespace SpaceEngineers
         /// Ziskani chybejicich materialu
         /// </summary>
         /// <returns>List<string></returns>
-        public List<string> GetMissing()
+        public TableData GetMissing()
         {
             //definice
-            var missing = new List<string>();
+            List<string[]> missing = new List<string[]>();
             //nalezeni chybejicich
-            foreach (var item in Constants.CheckMissingIngot)
+            foreach (string item in Constants.CheckMissingIngot)
             {
                 if (CargoIngot.ContainsKey(item))
                 {
                     if (CargoIngot[item][0] < CargoIngot[item][1])
                     {
-                        missing.Add(item);
+                        missing.Add(new string[] { item, Formater.Amount(CargoIngot[item][1] - CargoIngot[item][0]) });
                     }
                 }
                 else
                 {
-                    missing.Add(item);
+                    missing.Add(new string[] { item, Formater.Amount(Constants.AmountReference[item]) });
                 }
             }
-            //vraceni
-            return missing;
+            // sestaveni a vraceni
+            return TableData.Create(
+                null,
+                missing,
+                new double[] { 65, 35 }
+            );
         }
 
         /// <summary>
@@ -658,14 +712,14 @@ namespace SpaceEngineers
         public Cargo EnableAssemblerControl()
         {
             // definice
-            var needed = new List<string>();
-            var index = 0;
+            List<string> needed = new List<string>();
+            int index = 0;
             // vyber komponent ktere chybi nebo jich je malo
-            foreach (var comp in Constants.BasicAssembly)
+            foreach (KeyValuePair<string, string> comp in Constants.BasicAssembly)
             {
                 if (CargoComponent.ContainsKey(comp.Key))
                 {
-                    var exist = CargoComponent[comp.Key];
+                    float[] exist = CargoComponent[comp.Key];
                     if (exist[0] < exist[1])
                     {
                         needed.Add(comp.Value);
@@ -683,7 +737,7 @@ namespace SpaceEngineers
             // zapinani/vypinani assembleru
             if (needed.Count > 0)
             {
-                foreach (var block in Instance.GetByType<IMyAssembler>())
+                foreach (KeyValuePair<string, IMyAssembler> block in Instance.GetByType<IMyAssembler>())
                 {
                     // nastaveni
                     block.Value.CooperativeMode = false;
@@ -696,7 +750,7 @@ namespace SpaceEngineers
                     // vlozeni blueprintu do fronty (pouze pokud je prazdna
                     if (block.Value.IsQueueEmpty)
                     {
-                        var blueprint = MyDefinitionId.Parse("MyObjectBuilder_BlueprintDefinition/" + needed[index]);
+                        MyDefinitionId blueprint = MyDefinitionId.Parse("MyObjectBuilder_BlueprintDefinition/" + needed[index]);
                         block.Value.AddQueueItem(blueprint, (MyFixedPoint)100);
                     }
                     // zvyseni indexu

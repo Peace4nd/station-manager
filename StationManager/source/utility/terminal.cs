@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Sandbox.ModAPI.Ingame;
+using System;
 using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineers
 {
@@ -28,13 +28,13 @@ namespace SpaceEngineers
         /// </summary>
         /// <param name="name">Nazev</param>
         /// <returns></returns>
-        public static Dictionary<string, IMyTerminalBlock> Find(string name)
+        public static SortedDictionary<string, IMyTerminalBlock> Find(string name)
         {
             // debugger
             Debugger.Log("Looking for block '" + name + "'");
             // definice
             List<IMyTerminalBlock> searched = new List<IMyTerminalBlock>();
-            Dictionary<string, IMyTerminalBlock> blocks = new Dictionary<string, IMyTerminalBlock>();
+            SortedDictionary<string, IMyTerminalBlock> blocks = new SortedDictionary<string, IMyTerminalBlock>();
             // nalezeni bloku
             terminal.SearchBlocksOfName(name, searched);
             // debugger
@@ -42,7 +42,7 @@ namespace SpaceEngineers
             // prirazeni do slovniku
             if (searched.Count > 0)
             {
-                foreach (var search in searched)
+                foreach (IMyTerminalBlock search in searched)
                 {
                     // kontrola ze block zacina pozadovanym nazvem
                     if (!search.CustomName.StartsWith(name))

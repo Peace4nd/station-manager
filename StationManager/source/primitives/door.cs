@@ -1,4 +1,5 @@
 ﻿using Sandbox.ModAPI.Ingame;
+using System.Collections.Generic;
 
 namespace SpaceEngineers
 {
@@ -76,7 +77,7 @@ namespace SpaceEngineers
             // definice
             int closed = 0;
             // krokovani bloku
-            foreach (var block in Instance.GetByType<IMyDoor>())
+            foreach (KeyValuePair<string, IMyDoor> block in Instance.GetByType<IMyDoor>())
             {
                 if (block.Value.OpenRatio == 0)
                 {

@@ -1,6 +1,6 @@
 ﻿using Sandbox.ModAPI.Ingame;
-using SpaceEngineers.Game.ModAPI.Ingame;
 using System;
+using System.Collections.Generic;
 
 namespace SpaceEngineers
 {
@@ -22,7 +22,7 @@ namespace SpaceEngineers
         public static void Init(string name)
         {
             // naleyeni
-            var found = Terminal.Find(name);
+            SortedDictionary<string, IMyTerminalBlock> found = Terminal.Find(name);
             // overeni existence
             if (found.Count == 0)
             {
@@ -34,7 +34,7 @@ namespace SpaceEngineers
 
 
         //private stringify()
-            //private parse()
+        //private parse()
 
 
         /// <summary> 

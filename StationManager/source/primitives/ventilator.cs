@@ -1,5 +1,5 @@
-﻿using Sandbox.ModAPI.Ingame;
-using SpaceEngineers.Game.ModAPI.Ingame;
+﻿using SpaceEngineers.Game.ModAPI.Ingame;
+using System.Collections.Generic;
 
 namespace SpaceEngineers
 {
@@ -57,7 +57,7 @@ namespace SpaceEngineers
             // definice
             bool pressurized = true;
             // prochazeni bloku
-            foreach (var block in Instance.GetByType<IMyAirVent>())
+            foreach (KeyValuePair<string, IMyAirVent> block in Instance.GetByType<IMyAirVent>())
             {
                 if (block.Value.GetOxygenLevel() < 1)
                 {

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
+using System.Collections.Generic;
 using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineers
@@ -37,7 +37,7 @@ namespace SpaceEngineers
             // definice
             List<string> status = new List<string>();
             // prochazeni bloku
-            foreach (var block in Instance.GetByType<IMyGasTank>())
+            foreach (KeyValuePair<string, IMyGasTank> block in Instance.GetByType<IMyGasTank>())
             {
                 status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value), (block.Value as IMyGasTank).FilledRatio, 1));
             }
@@ -54,7 +54,7 @@ namespace SpaceEngineers
             // definice
             List<string> status = new List<string>();
             // prochazeni bloku
-            foreach (var block in Instance.GetByType<IMyGasGenerator>())
+            foreach (KeyValuePair<string, IMyGasGenerator> block in Instance.GetByType<IMyGasGenerator>())
             {
                 // definice
                 List<MyInventoryItem> items = new List<MyInventoryItem>();

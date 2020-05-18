@@ -16,7 +16,8 @@ namespace SpaceEngineers
         /// Konstruktor
         /// </summary>
         /// <param name="block">Blok</param>
-        public Sound(Block block) {
+        public Sound(Block block)
+        {
             Instance = block;
         }
 

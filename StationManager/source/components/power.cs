@@ -1,11 +1,9 @@
 ﻿
 
-using System.Collections.Generic;
 using Sandbox.ModAPI.Ingame;
-using VRage.Game.ModAPI.Ingame;
 using SpaceEngineers.Game.ModAPI.Ingame;
-using Sandbox.ModAPI.Interfaces;
-using VRage;
+using System.Collections.Generic;
+using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineers
 {
@@ -28,7 +26,8 @@ namespace SpaceEngineers
         /// Konstruktor
         /// </summary>
         /// <param name="block">Blok</param>
-        public Power(string block) {
+        public Power(string block)
+        {
             Instance = new Block(block);
         }
 
@@ -52,7 +51,7 @@ namespace SpaceEngineers
             // definice
             List<string> status = new List<string>();
             //prochazeni bloku 
-            foreach (var block in Instance.GetByType<IMyReactor>())
+            foreach (KeyValuePair<string, IMyReactor> block in Instance.GetByType<IMyReactor>())
             {
                 //hodnoty
                 IMyReactor reactor = block.Value as IMyReactor;
@@ -105,7 +104,7 @@ namespace SpaceEngineers
             //overeni provoyu reaktoru 
             int reactorFailed = 0;
             int reactorCount = 0;
-            foreach (var block in Instance.GetByType<IMyReactor>())
+            foreach (KeyValuePair<string, IMyReactor> block in Instance.GetByType<IMyReactor>())
             {
                 reactorCount++;
                 if (!block.Value.IsFunctional || !block.Value.IsWorking)
@@ -156,7 +155,7 @@ namespace SpaceEngineers
             // definice
             List<string> status = new List<string>();
             //prochazeni bloku 
-            foreach (var block in Instance.GetByType<IMyBatteryBlock>())
+            foreach (KeyValuePair<string, IMyBatteryBlock> block in Instance.GetByType<IMyBatteryBlock>())
             {
                 // hodnoty 
                 float input = block.Value.CurrentInput;
@@ -203,7 +202,7 @@ namespace SpaceEngineers
             // definice
             List<string> status = new List<string>();
             //prochazeni bloku 
-            foreach (var block in Instance.GetByType<IMySolarPanel>())
+            foreach (KeyValuePair<string, IMySolarPanel> block in Instance.GetByType<IMySolarPanel>())
             {
                 // hodnoty 
                 float actual = block.Value.CurrentOutput;

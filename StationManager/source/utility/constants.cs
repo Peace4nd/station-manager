@@ -15,15 +15,10 @@ namespace SpaceEngineers
         public const int ColumnAmount = 5;
 
         /// <summary>
-        /// Rodina pisma
-        /// </summary>
-        public const long FontFamily = 1147350002;
-
-        /// <summary>
         /// Nasatveni obsahu panelu
         /// </summary>
-        public const long PanelContent = 2;
-        public const int PanelColumns = 51;
+        public const int PanelColumnsWide = 51;
+        public const int PanelColumnsSmall = 25;
         public const int PanelRows = 17;
 
         /// <summary> 
@@ -41,18 +36,18 @@ namespace SpaceEngineers
             {"SteelPlate", 5000},
             // komponenty
             {"BulletproofGlass", 500},
-            {"Computer", 500},
-            {"Display", 500},
-            {"Motor", 500},
-            {"Detector", 100},
-            {"GravityGenerator", 100},
-            {"Medical", 100},
-            {"PowerCell", 100},
-            {"RadioCommunication", 100},
-            {"Reactor", 100},
-            {"SolarCell", 100},
-            {"Thrust", 1000},
-            {"Superconductor", 1000},
+            {"Computer", 1000},
+            {"Display", 1000},
+            {"Motor", 1000},
+            {"Detector", 0},
+            {"GravityGenerator", 0},
+            {"Medical", 0},
+            {"PowerCell", 0},
+            {"RadioCommunication", 0},
+            {"Reactor", 0},
+            {"SolarCell", 0},
+            {"Thrust", 0},
+            {"Superconductor", 0},
             // ingoty
             {"Stone", 7500},
             {"Iron", 15000},
@@ -84,29 +79,9 @@ namespace SpaceEngineers
             {"OxygenBottle", -1},
             {"HydrogenBottle", -1},
             {"Explosives", -1},
-            {"Parachute", -1}
-        };
-
-        /// <summary>
-        /// Rudy zpracovatelne v obloukove peci
-        /// </summary>
-        public static readonly List<string> FurnanceOres = new List<string> {
-            "Scrap",
-            "Iron",
-            "Nickel",
-            "Cobalt"
-        };
-
-        /// <summary>
-        /// Rudy zpracovatelne v obloukove peci
-        /// </summary>
-        public static readonly List<string> RefineryOres = new List<string> {
-            "Silicon",
-            "Silver",
-            "Gold",
-            "Magnesium",
-            "Platinum",
-            "Uranium"
+            {"Parachute", -1},
+            {"Canvas", -1},
+            {"UltimateAutomaticRifleItem", -1}
         };
 
         /// <summary>
@@ -143,6 +118,23 @@ namespace SpaceEngineers
         };
 
         /// <summary>
+        /// Komponenty na cachovani
+        /// </summary>
+        public static readonly List<string> ComponentsToCache = new List<string> {
+            "Construction",
+            "Girder",
+            "InteriorPlate",
+            "LargeTube",
+            "MetalGrid",
+            "SmallTube",
+            "SteelPlate",
+            "BulletproofGlass",
+            "Computer",
+            "Display",
+            "Motor"
+        };
+
+        /// <summary>
         /// Sorter cache
         /// </summary>
         public const int SorterCache = 100;
@@ -155,6 +147,6 @@ namespace SpaceEngineers
         /// <summary>
         /// Maximalni limit rud
         /// </summary>
-        public const int MaximalOreAmount = 200000;
+        public const int MaximalOreAmount = 250000;
     }
 }

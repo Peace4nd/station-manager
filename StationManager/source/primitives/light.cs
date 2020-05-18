@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SpaceEngineers.Game.ModAPI;
+using System;
 using VRageMath;
-using SpaceEngineers.Game.ModAPI;
 
 namespace SpaceEngineers
 {
@@ -18,7 +18,8 @@ namespace SpaceEngineers
         /// Konstruktor
         /// </summary>
         /// <param name="block">Blok</param>
-        public Light(Block block) {
+        public Light(Block block)
+        {
             Instance = block;
         }
 

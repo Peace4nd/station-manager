@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
+using System;
+using System.Collections.Generic;
 
 namespace SpaceEngineers
 {
@@ -90,12 +90,12 @@ namespace SpaceEngineers
         /// <summary> 
         /// Pole objektu bloku 
         /// </summary> 
-        private readonly Dictionary<string, IMyTerminalBlock> Found = new Dictionary<string, IMyTerminalBlock>();
+        private readonly SortedDictionary<string, IMyTerminalBlock> Found = new SortedDictionary<string, IMyTerminalBlock>();
 
         /// <summary>
         /// Nazev bloku
         /// </summary>
-        private string Name = null;
+        private readonly string Name = null;
 
         /// <summary>
         /// Konstruktor
@@ -114,7 +114,7 @@ namespace SpaceEngineers
         /// <param name="block">Blok</param>
         public Block(IMyTerminalBlock block)
         {
-            Debugger.Log("Creating from block '" + block.CustomName  + "'");
+            Debugger.Log("Creating from block '" + block.CustomName + "'");
             Found.Add(block.CustomName, block);
         }
 
@@ -141,7 +141,7 @@ namespace SpaceEngineers
         {
             if (Found.Count > 0)
             {
-                foreach (var block in Found)
+                foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
                 {
                     if (block.Value is T)
                     {
@@ -157,12 +157,12 @@ namespace SpaceEngineers
         /// </summary>
         /// <param name="mustExist"></param>
         /// <returns></returns>
-        public Dictionary<string, T> GetByType<T>(bool mustExist = false) where T : IMyTerminalBlock
+        public SortedDictionary<string, T> GetByType<T>(bool mustExist = false) where T : IMyTerminalBlock
         {
             // definice
-            Dictionary<string, T> typed = new Dictionary<string, T>();
+            SortedDictionary<string, T> typed = new SortedDictionary<string, T>();
             // vyfiltrovani prislusneho typu
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Value is T)
                 {
@@ -188,7 +188,7 @@ namespace SpaceEngineers
             // definice
             List<T> typed = new List<T>();
             // vyfiltrovani prislusneho typu
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Value is T)
                 {
@@ -211,12 +211,12 @@ namespace SpaceEngineers
         /// <param name="name"></param>
         /// <param name="mustExist"></param>
         /// <returns></returns>
-        public Dictionary<string, T> GetByName<T>(string name, bool mustExist = false) where T : IMyTerminalBlock
+        public SortedDictionary<string, T> GetByName<T>(string name, bool mustExist = false) where T : IMyTerminalBlock
         {
             // definice
-            Dictionary<string, T> typed = new Dictionary<string, T>();
+            SortedDictionary<string, T> typed = new SortedDictionary<string, T>();
             // vyfiltrovani podle jmena
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Key.Contains(name) && block.Value is T)
                 {
@@ -239,7 +239,7 @@ namespace SpaceEngineers
         /// <param name="name"></param>
         /// <param name="mustExist"></param>
         /// <returns></returns>
-        public Dictionary<string, IMyTerminalBlock> GetByName(string name, bool mustExist = false)
+        public SortedDictionary<string, IMyTerminalBlock> GetByName(string name, bool mustExist = false)
         {
             return GetByName<IMyTerminalBlock>(name, mustExist);
         }
@@ -256,7 +256,7 @@ namespace SpaceEngineers
             // definice
             List<T> typed = new List<T>();
             // vyfiltrovani podle jmena
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Key.Contains(name) && block.Value is T)
                 {
@@ -266,7 +266,7 @@ namespace SpaceEngineers
             // overeni existence
             if (typed.Count == 0 && mustExist)
             {
-                throw new Exception("E-BL-FI-04: Block '" + name  + "' doesn't exists");
+                throw new Exception("E-BL-FI-04: Block '" + name + "' doesn't exists");
             }
             // vraceni
             return typed;
@@ -289,7 +289,7 @@ namespace SpaceEngineers
         /// Existujici bloky
         /// </summary>
         /// <returns></returns>
-        public Dictionary<string, IMyTerminalBlock> GetAll()
+        public SortedDictionary<string, IMyTerminalBlock> GetAll()
         {
             return Found;
         }
@@ -300,7 +300,8 @@ namespace SpaceEngineers
         /// <returns></returns>
         public List<string> Keys
         {
-            get {
+            get
+            {
                 List<string> names = new List<string>(Found.Keys);
                 names.Sort();
                 return names;
@@ -322,7 +323,7 @@ namespace SpaceEngineers
         /// <param name="action">Akce</param> 
         public void Action(string action)
         {
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 Block.Action(block.Value, action);
             }
@@ -334,7 +335,7 @@ namespace SpaceEngineers
         /// <param name="action">Akce</param> 
         public void Action<T>(string action)
         {
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Value is T)
                 {
@@ -350,7 +351,7 @@ namespace SpaceEngineers
         /// <param name="value">Hodnota</param> 
         public void SetValue<V>(string property, V value)
         {
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 Block.SetValue<V>(block.Value, property, value);
             }
@@ -363,7 +364,7 @@ namespace SpaceEngineers
         /// <param name="value">Hodnota</param> 
         public void SetValue<T, V>(string property, V value)
         {
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Value is T)
                 {
@@ -381,7 +382,7 @@ namespace SpaceEngineers
             // definice
             Dictionary<string, V> values = new Dictionary<string, V>();
             // naplneni
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 values.Add(block.Key, Block.GetValue<V>(block.Value, property));
             }
@@ -398,7 +399,7 @@ namespace SpaceEngineers
             // definice
             Dictionary<string, V> values = new Dictionary<string, V>();
             // naplneni
-            foreach (var block in Found)
+            foreach (KeyValuePair<string, IMyTerminalBlock> block in Found)
             {
                 if (block.Value is T)
                 {

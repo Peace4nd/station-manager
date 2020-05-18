@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Sandbox.ModAPI.Ingame;
+using System;
 using System.Collections.Generic;
-using Sandbox.ModAPI.Ingame;
 
 namespace SpaceEngineers
 {
@@ -76,7 +76,7 @@ namespace SpaceEngineers
             // definice
             List<string> names = new List<string>();
             // premapovani bloku
-            foreach (var block in blocks)
+            foreach (IMyTerminalBlock block in blocks)
             {
                 names.Add(block.CustomName);
             }
@@ -89,7 +89,7 @@ namespace SpaceEngineers
         /// </summary>
         /// <param name="message"></param>
         /// <param name="blocks"></param>
-        public static void Log(string message, Dictionary<string, IMyTerminalBlock> blocks)
+        public static void Log(string message, SortedDictionary<string, IMyTerminalBlock> blocks)
         {
             Log(message, new List<string>(blocks.Keys));
         }
