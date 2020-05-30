@@ -115,6 +115,7 @@
   <ItemGroup>
     <Compile Include="source\primitives\block.cs" />
     <Compile Include="source\primitives\sound.cs" />
+    <Compile Include="source\primitives\sensor.cs" />
     <Compile Include="source\script.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="source\components\cargo.cs" />
@@ -125,6 +126,9 @@
     <Compile Include="source\primitives\light.cs" />
     <Compile Include="source\primitives\memory.cs" />
     <Compile Include="source\primitives\ventilator.cs" />
+    <Compile Include="source\utility\enums.cs" />
+    <Compile Include="source\utility\sensor-detect.cs" />
+    <Compile Include="source\utility\sensor-range.cs" />
     <Compile Include="source\utility\tools.cs" />
     <Compile Include="source\utility\table-data.cs" />
     <Compile Include="source\utility\status.cs" />
@@ -134,7 +138,7 @@
     <Compile Include="source\utility\constants.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="names.txt" />
+    <None Include="names.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
