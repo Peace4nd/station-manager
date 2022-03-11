@@ -6,38 +6,20 @@ namespace SpaceEngineers
     /// <summary> 
     /// Ventilator 
     /// </summary> 
-    class Ventilator
+    class Ventilator : Block
     {
-        /// <summary>
-        /// Instance
-        /// </summary>
-        private static Block Instance = null;
-
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Ventilator(Block block)
-        {
-            Instance = block;
-        }
-
-        /// <summary>
-        /// Staticky konstruktor
-        /// </summary>
         /// <param name="block"></param>
-        /// <returns></returns>
-        public static Ventilator Create(Block block)
-        {
-            return new Ventilator(block);
-        }
+        public Ventilator(string block) : base(block) { }
 
         /// <summary> 
         /// Dekomprese mistnosti 
         /// </summary> 
         public void Depressurize()
         {
-            Instance.Action<IMyAirVent>("Depressurize_On");
+            Action("Depressurize_On");
         }
 
         /// <summary> 
@@ -45,7 +27,7 @@ namespace SpaceEngineers
         /// </summary> 
         public void Pressurize()
         {
-            Instance.Action<IMyAirVent>("Depressurize_Off");
+            Action("Depressurize_Off");
         }
 
         /// <summary> 
@@ -54,18 +36,7 @@ namespace SpaceEngineers
         /// <returns>Natlakovani mistnosti</returns> 
         public bool IsPressurized()
         {
-            // definice
-            bool pressurized = true;
-            // prochazeni bloku
-            foreach (KeyValuePair<string, IMyAirVent> block in Instance.GetByType<IMyAirVent>())
-            {
-                if (block.Value.GetOxygenLevel() < 1)
-                {
-                    pressurized = false;
-                }
-            }
-            // vraceni
-            return pressurized;
+            return As<IMyAirVent>().GetOxygenLevel() == 1;
         }
     }
 }

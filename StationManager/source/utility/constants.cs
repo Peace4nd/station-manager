@@ -22,131 +22,140 @@ namespace SpaceEngineers
         public const int PanelRows = 17;
 
         /// <summary> 
-        /// Minimalni mnoztvi oceli 
+        /// Definice komponent
         /// </summary> 
-        public static readonly Dictionary<string, int> AmountReference = new Dictionary<string, int>()
+        /// 
+        public static readonly Dictionary<string, Definition> Components = new Dictionary<string, Definition>()
         {
-            // ocel
-            {"Construction", 2000},
-            {"Girder", 2000},
-            {"InteriorPlate", 2000},
-            {"LargeTube", 500},
-            {"MetalGrid", 2000},
-            {"SmallTube", 2000},
-            {"SteelPlate", 5000},
             // komponenty
-            {"BulletproofGlass", 500},
-            {"Computer", 1000},
-            {"Display", 1000},
-            {"Motor", 1000},
-            {"Detector", 0},
-            {"GravityGenerator", 0},
-            {"Medical", 0},
-            {"PowerCell", 0},
-            {"RadioCommunication", 0},
-            {"Reactor", 0},
-            {"SolarCell", 0},
-            {"Thrust", 0},
-            {"Superconductor", 0},
+            {"Construction",  Definition.Create(1500, true, true, "ConstructionComponent", false)},
+            {"Girder", Definition.Create(1500, true, true, "GirderComponent", false)},
+            {"InteriorPlate", Definition.Create(1500, true, true, "InteriorPlate", false)},
+            {"LargeTube", Definition.Create(500, true, true, "LargeTube", false)},
+            {"MetalGrid", Definition.Create(500, true, true, "MetalGrid", false)},
+            {"SmallTube", Definition.Create(1500, true, true, "SmallTube", false)},
+            {"SteelPlate", Definition.Create(2500, true, true, "SteelPlate", false)},
+            {"BulletproofGlass", Definition.Create(500, true, true, "BulletproofGlass", false)},
+            {"Computer", Definition.Create(200, true, true, "ComputerComponent", false)},
+            {"Display", Definition.Create(200, true, true, "Display", false)},
+            {"Motor", Definition.Create(200, true, true, "MotorComponent", false)},
+            {"PowerCell", Definition.Create(200, true, false, "PowerCell", false)},
+            {"Detector", Definition.Create(0, false, false, null, false)},
+            {"GravityGenerator", Definition.Create(0, false, false, null, false)},
+            {"Medical", Definition.Create(0, false, false, null, false)},
+            {"RadioCommunication", Definition.Create(0, false, false, null, false)},
+            {"Reactor", Definition.Create(0, false, false, null, false)},
+            {"SolarCell", Definition.Create(0, false, false, null, false)},
+            {"Thrust", Definition.Create(0, false, false, null, false)},
+            {"Superconductor", Definition.Create(0, false, false, null, false)},
+
             // ingoty
-            {"Stone", 7500},
-            {"Iron", 15000},
-            {"Nickel", 7500},
-            {"Cobalt", 7500},
-            {"Silicon", 7500},
-            {"Silver", 7500},
-            {"Gold", 7500},
-            {"Magnesium", 7500},
-            {"Platinum", 7500},
-            {"Uranium", 2500},
-            {"Ice", 50000},
+            {"Stone", Definition.Create(7500, false, false, null, false)},
+            {"Iron", Definition.Create(15000, false, false, null, true)},
+            {"Nickel",Definition.Create(7500, false, false, null, true)},
+            {"Cobalt", Definition.Create(7500, false, false, null, true)},
+            {"Silicon", Definition.Create(7500, false, false, null, true)},
+            {"Silver", Definition.Create(7500, false, false, null, true)},
+            {"Gold", Definition.Create(7500, false, false, null, true)},
+            {"Magnesium", Definition.Create(7500, false, false, null, true)},
+            {"Platinum", Definition.Create(7500, false, false, null, true)},
+            {"Uranium", Definition.Create(2500, false, false, null, true)},
+            {"Ice", Definition.Create(7500, false, false, null, true)},
+
             // naboje
-            {"NATO_25x184mm", 100},
+            {"NATO_25x184mm", Definition.Create(250, false, false, "NATO_25x184mmMagazine", false)},
+
             // shits
-            {"NATO_5p56x45mm", -1},
-            {"Missile200mm", -1},
-            {"AngleGrinderItem", -1},
-            {"AngleGrinder2Item", -1},
-            {"AngleGrinder3Item", -1},
-            {"HandDrillItem", -1},
-            {"HandDrill2Item", -1},
-            {"HandDrill3Item", -1},
-            {"WelderItem", -1},
-            {"Welder2Item", -1},
-            {"Welder3Item", -1},
-            {"AutomaticRifleItem", -1},
-            {"Scrap", -1},
-            {"OxygenBottle", -1},
-            {"HydrogenBottle", -1},
-            {"Explosives", -1},
-            {"Parachute", -1},
-            {"Canvas", -1},
-            {"UltimateAutomaticRifleItem", -1}
-        };
-
-        /// <summary>
-        /// Materialy ke kontrole (ktere chybi)
-        /// </summary>
-        public static readonly List<string> CheckMissingIngot = new List<string> {
-            "Iron",
-            "Nickel",
-            "Cobalt",
-            "Silicon",
-            "Silver",
-            "Gold",
-            "Magnesium",
-            "Platinum",
-            "Uranium"
-        };
-
-        /// <summary>
-        /// Zakladni vyrobni fronta
-        /// </summary>
-        public static readonly Dictionary<string, string> BasicAssembly = new Dictionary<string, string> {
-            {"Construction", "ConstructionComponent"},
-            {"Girder", "GirderComponent"},
-            {"InteriorPlate", "InteriorPlate" },
-            {"LargeTube","LargeTube"},
-            {"MetalGrid", "MetalGrid"},
-            {"SmallTube", "SmallTube"},
-            {"SteelPlate", "SteelPlate"},
-            {"Computer", "ComputerComponent"},
-            {"Display", "Display"},
-            {"Motor", "MotorComponent"},
-            {"BulletproofGlass", "BulletproofGlass"},
-            {"Thrust", "ThrustComponent"}
-        };
-
-        /// <summary>
-        /// Komponenty na cachovani
-        /// </summary>
-        public static readonly List<string> ComponentsToCache = new List<string> {
-            "Construction",
-            "Girder",
-            "InteriorPlate",
-            "LargeTube",
-            "MetalGrid",
-            "SmallTube",
-            "SteelPlate",
-            "BulletproofGlass",
-            "Computer",
-            "Display",
-            "Motor"
+            {"NATO_5p56x45mm", Definition.Create(-1, false, false, null, false)},
+            {"Missile200mm", Definition.Create(-1, false, false, null, false)},
+            {"AngleGrinderItem", Definition.Create(-1, false, false, null, false)},
+            {"AngleGrinder2Item", Definition.Create(-1, false, false, null, false)},
+            {"AngleGrinder3Item", Definition.Create(-1, false, false, null, false)},
+            {"HandDrillItem", Definition.Create(-1, false, false, null, false)},
+            {"HandDrill2Item", Definition.Create(-1, false, false, null, false)},
+            {"HandDrill3Item", Definition.Create(-1, false, false, null, false)},
+            {"WelderItem", Definition.Create(-1, false, false, null, false)},
+            {"Welder2Item", Definition.Create(-1, false, false, null, false)},
+            {"Welder3Item", Definition.Create(-1, false, false, null, false)},
+            {"AutomaticRifleItem", Definition.Create(-1, false, false, null, false)},
+            {"Scrap", Definition.Create(-1, false, false, null, false)},
+            {"OxygenBottle", Definition.Create(-1, false, false, null, false)},
+            {"HydrogenBottle", Definition.Create(-1, false, false, null, false)},
+            {"Explosives", Definition.Create(-1, false, false, null, false)},
+            {"Parachute", Definition.Create(-1, false, false, null, false)},
+            {"Canvas", Definition.Create(-1, false, false, null, false)},
+            {"UltimateAutomaticRifleItem", Definition.Create(-1, false, false, null, false)},
+            {"SpaceCredit", Definition.Create(-1, false, false, null, false)}
         };
 
         /// <summary>
         /// Sorter cache
         /// </summary>
-        public const int SorterCache = 100;
+        public const int SorterCache = 200;
 
         /// <summary>
         /// Zakladni mnozstvi rafinovane rudy
         /// </summary>
         public const int RefineryAmount = 1000;
+    }
+
+    /// <summary>
+    /// Definice komponent
+    /// </summary>
+    internal class Definition
+    {
+        /// <summary>
+        /// Reference
+        /// </summary>
+        public int Reference;
 
         /// <summary>
-        /// Maximalni limit rud
+        /// Assembly
         /// </summary>
-        public const int MaximalOreAmount = 250000;
+        public bool Assembly;
+
+        /// <summary>
+        /// Cache
+        /// </summary>
+        public bool Cache;
+
+        /// <summary>
+        /// Missing
+        /// </summary>
+        public bool Missing;
+
+        /// <summary>
+        /// Blueprint
+        /// </summary>
+        public string Blueprint;
+
+        /// <summary>
+        /// Konstruktor
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="assembly"></param>
+        /// <param name="cache"></param>
+        /// <param name="blueprint"></param>
+        public Definition(int reference, bool assembly, bool cache, string blueprint, bool missing)
+        {
+            Reference = reference;
+            Assembly = assembly;
+            Cache = cache;
+            Blueprint = blueprint;
+            Missing = missing;
+        }
+
+        /// <summary>
+        /// Staticky konstruktor
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="assembly"></param>
+        /// <param name="cache"></param>
+        /// <param name="blueprint"></param>
+        /// <returns></returns>
+        public static Definition Create(int reference, bool assembly, bool cache, string blueprint, bool missing)
+        {
+            return new Definition(reference, assembly, cache, blueprint, missing);
+        }
     }
 }

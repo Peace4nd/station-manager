@@ -10,7 +10,7 @@ namespace SpaceEngineers
     /// <summary> 
     /// Prace s displayem 
     /// </summary> 
-    class Display
+    class Display : Group
     {
         /// <summary> 
         /// Velikost pisma 
@@ -33,16 +33,6 @@ namespace SpaceEngineers
         private int PanelCounter = 0;
 
         /// <summary>
-        /// Instance
-        /// </summary>
-        private static Block Instance = null;
-
-        /// <summary>
-        /// Siroky panel
-        /// </summary>
-        private readonly bool Wide = true;
-
-        /// <summary>
         /// Vypocteny pocet radku
         /// </summary>
         private double CalculatedRows = 0;
@@ -50,29 +40,13 @@ namespace SpaceEngineers
         /// <summary>
         /// Dostupne panely
         /// </summary>
-        private List<IMyTextSurface> Panels;
+        private List<Block> Panels;
 
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        /// <param name="small"></param>
-        public Display(string block, bool small)
-        {
-            Instance = new Block(block);
-            Wide = !small;
-        }
-
-        /// <summary>
-        /// Staticky konstruktor
-        /// </summary>
-        /// <param name="block"></param>
-        /// <param name="small"></param>
-        /// <returns></returns>
-        public static Display Create(string block, bool small = false)
-        {
-            return new Display(block, small);
-        }
+        /// <param name="group"></param>
+        public Display(string group) : base(group) { }
 
         /// <summary>
         /// Prepocet dostupnych sloupcu
@@ -80,14 +54,7 @@ namespace SpaceEngineers
         /// <returns></returns>
         private double CalculateColumns()
         {
-            if (Wide)
-            {
-                return Math.Floor(Constants.PanelColumnsWide / FontSize);
-            }
-            else
-            {
-                return Math.Floor(Constants.PanelColumnsSmall / FontSize);
-            }
+            return Math.Floor(Constants.PanelColumnsWide / FontSize);
         }
 
         /// <summary>
@@ -140,7 +107,7 @@ namespace SpaceEngineers
         public Display Text()
         {
             CalculatedRows = CalculateRows();
-            Panels = Instance.GetByType<IMyTextPanel>().Values.ToList<IMyTextSurface>();
+            Panels = Only<IMyTextSurface>();
             return this;
         }
 
@@ -152,7 +119,17 @@ namespace SpaceEngineers
         public Display Cocpit(int surface = 0)
         {
             CalculatedRows = CalculateRows();
-            Panels = new List<IMyTextSurface>() { Instance.GetByType<IMyCockpit>().Values.First().GetSurface(surface) };
+            // Panels = new List<IMyTextSurface>() { First().As<IMyCockpit>().GetSurface(surface) };
+            return this;
+        }
+
+        /// <summary> 
+        /// Velikost pisma
+        /// </summary> 
+        /// <returns>Display</returns> 
+        public Display Size(float size)
+        {
+            FontSize = size;
             return this;
         }
 
@@ -243,14 +220,15 @@ namespace SpaceEngineers
         /// <returns></returns>
         public Display Alert(bool enabled)
         {
+            var panel = Panels[PanelCounter].As<IMyTextSurface>();
             if (enabled)
             {
-                Panels[PanelCounter].AddImageToSelection("Danger");
-                Panels[PanelCounter].PreserveAspectRatio = true;
+                panel.AddImageToSelection("Danger");
+                panel.PreserveAspectRatio = true;
             }
             else
             {
-                Panels[PanelCounter].ClearImagesFromSelection();
+                panel.ClearImagesFromSelection();
             }
             return this;
         }
@@ -272,7 +250,7 @@ namespace SpaceEngineers
             if (PanelCounter < Panels.Count)
             {
                 // zkratka
-                IMyTextSurface panel = Panels[PanelCounter];
+                IMyTextSurface panel = Panels[PanelCounter].As<IMyTextSurface>();
                 // nastaveni a zapis
                 panel.FontSize = FontSize;
                 panel.FontColor = FontColor;
@@ -323,8 +301,9 @@ namespace SpaceEngineers
         /// </summary> 
         public Display Clear()
         {
-            foreach (IMyTextSurface panel in Panels)
+            foreach (var block in Panels)
             {
+                var panel = block.As<IMyTextSurface>();
                 panel.Font = "Monospace";
                 panel.ContentType = ContentType.TEXT_AND_IMAGE;
                 panel.WriteText("", false);
@@ -362,6 +341,61 @@ namespace SpaceEngineers
             }
             // fluent
             return this;
+        }
+    }
+
+    /// <summary>
+    /// Tabulka
+    /// </summary>
+    class TableData
+    {
+        /// <summary>
+        /// Hlavicka
+        /// </summary>
+        public string[] Header;
+
+        /// <summary>
+        /// Radky
+        /// </summary>
+        public List<string[]> Rows;
+
+        /// <summary>
+        /// Proporce sloupcu
+        /// </summary>
+        public double[] Width;
+
+        /// <summary>
+        /// Konstruktor
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="rows"></param>
+        /// <param name="width"></param>
+        public TableData(string[] header, List<string[]> rows, double[] width)
+        {
+            Header = header;
+            Rows = rows;
+            Width = width;
+        }
+
+        /// <summary>
+        /// Staticky konstruktor
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="rows"></param>
+        /// <param name="width"></param>
+        /// <returns></returns>
+        public static TableData Create(string[] header, List<string[]> rows, double[] width)
+        {
+            return new TableData(header, rows, width);
+        }
+
+        /// <summary>
+        /// Overeni ze existuje hlavicka
+        /// </summary>
+        /// <returns></returns>
+        public bool HasHeader()
+        {
+            return Header != null && Header.Length > 0;
         }
     }
 }

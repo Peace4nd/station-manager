@@ -132,5 +132,17 @@ namespace SpaceEngineers
             //vraceni 
             return CreatePercentageBars(amount, reference) + FormatAmount(Math.Min(100, (amount / reference) * 100), true) + name;
         }
+
+
+        /// <summary>
+        /// Status
+        /// </summary>
+        /// <param name="block"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public static string Status(Block block, string status)
+        {
+            return status + (new string (' ', (Constants.ColumnStatus - status.Length))) + " " + block.Name;
+        }
     }
 }

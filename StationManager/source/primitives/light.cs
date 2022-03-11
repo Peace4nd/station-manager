@@ -5,33 +5,15 @@ using VRageMath;
 namespace SpaceEngineers
 {
     /// <summary> 
-    /// Svetla 
+    /// Svetlo 
     /// </summary> 
-    class Light
+    class Light : Group
     {
-        /// <summary>
-        /// Instance
-        /// </summary>
-        private static Block Instance = null;
-
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Light(Block block)
-        {
-            Instance = block;
-        }
-
-        /// <summary>
-        /// Staticky konstruktor
-        /// </summary>
         /// <param name="block"></param>
-        /// <returns></returns>
-        public static Light Create(Block block)
-        {
-            return new Light(block);
-        }
+        public Light(string block) : base(block) { }
 
         /// <summary> 
         /// Zapnuti 
@@ -39,7 +21,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Light On()
         {
-            Instance.Action<IMyInteriorLight>("OnOff_On");
+            Action("OnOff_On");
             return this;
         }
 
@@ -49,7 +31,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Light Off()
         {
-            Instance.Action<IMyInteriorLight>("OnOff_On");
+            Action("OnOff_Off");
             return this;
         }
 
@@ -59,7 +41,7 @@ namespace SpaceEngineers
         /// <returns>Light</returns> 
         public Light White()
         {
-            Instance.SetValue<IMyInteriorLight, Color>("Color", Color.White);
+            SetValue<Color>("Color", Color.White);
             return this;
         }
 
@@ -69,7 +51,7 @@ namespace SpaceEngineers
         /// <returns>Light</returns> 
         public Light Red()
         {
-            Instance.SetValue<IMyInteriorLight, Color>("Color", Color.Red);
+            SetValue<Color>("Color", Color.Red);
             return this;
         }
 
@@ -79,7 +61,7 @@ namespace SpaceEngineers
         /// <returns>Light</returns> 
         public Light Green()
         {
-            Instance.SetValue<IMyInteriorLight, Color>("Color", Color.Green);
+            SetValue<Color>("Color", Color.Green);
             return this;
         }
 
@@ -89,7 +71,7 @@ namespace SpaceEngineers
         /// <returns>Light</returns> 
         public Light Blue()
         {
-            Instance.SetValue<IMyInteriorLight, Color>("Color", Color.Blue);
+            SetValue<Color>("Color", Color.Blue);
             return this;
         }
 
@@ -99,7 +81,7 @@ namespace SpaceEngineers
         /// <returns>Light</returns> 
         public Light Yellow()
         {
-            Instance.SetValue<IMyInteriorLight, Color>("Color", Color.Yellow);
+            SetValue<Color>("Color", Color.Yellow);
             return this;
         }
 
@@ -116,7 +98,7 @@ namespace SpaceEngineers
                 throw new Exception("E-LI-01: Blick interval can't be less then one");
             }
             // nastaveni
-            Instance.SetValue<IMyInteriorLight, float>("Blink Interval", interval);
+            SetValue<float>("Blink Interval", interval);
             // fluent
             return this;
         }
@@ -134,7 +116,7 @@ namespace SpaceEngineers
                 throw new Exception("E-LI-02: Intensity must be greater then zero");
             }
             // nastaveni
-            Instance.SetValue<IMyInteriorLight, float>("Intensity", intensity);
+            SetValue<float>("Intensity", intensity);
             // fluent
             return this;
         }
@@ -152,7 +134,7 @@ namespace SpaceEngineers
                 throw new Exception("E-LI-03: Radius must be greater then zero");
             }
             // nastaveni
-            Instance.SetValue<IMyInteriorLight, float>("Radius", radius);
+            SetValue<float>("Radius", radius);
             // fluent
             return this;
         }

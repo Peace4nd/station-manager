@@ -22,39 +22,53 @@ namespace SpaceEngineers
             // terminal
             Terminal.Init(GridTerminalSystem);
 
+            /*
+            // prechodove komory
+            Airlock arl = new Airlock()
+                .AddDoor("Airlock_Coridor_Entrance", "Airlock_Coridor_Exit")
+                .AddDoor("Airlock_Basement_Entrance", "Airlock_Basement_Exit")
+                .AddDoor("Airlock_Main_Entrance", "Airlock_Main_Exit")
+                .AddDoor("Airlock_Hangar_Entrance", "Airlock_Hangar_Exit")
+                .Watch();
+            */
 
-            // napajeni a provozni plyny
+            // napajeni plyny
             Power pwr = new Power("Power")
                 .SetUraniuReference(50)
                 .EnableBatteryFailsafe();
+
+            // provozni plyny
             Gases gas = new Gases("Gases")
-                .SetIceReference(1500);
+                .SetIceReference(2500);
+
             // status napajeni a plynu
-            Display.Create("Panel_Basic")
+            new Display("Panel_Basic")
                 .Text()
                 .Clear()
                 .Small()
                 .White()
                 .Line("Energy")
                 .Ruler()
-                .Lines(pwr.GetReactorStatus())
-                //.Lines(pwr.GetBatteryStatus())
-                //.Lines(pwr.GetSolarStatus())
+                .Lines(pwr.GetStatus())
                 .NewLine()
                 .Line("H2/O2")
                 .Ruler()
-                .Lines(gas.GetIceStatus())
-                .Lines(gas.GetTankStatus());
+                .Lines(gas.GetStatus());
 
             // nakladovy prostor
-            Cargo crg = new Cargo("Cargo")
-                .EnableSorter()
-                .EnableRefineryControl()
-                .EnableCache()
-                .EnableAssemblerControl();
+            Cargo crg = new Cargo()
+                .AddStorage("Cargo_Component", StorageType.Component)
+                .AddStorage("Cargo_Ingot", StorageType.Ingot)
+                .AddStorage("Cargo_Ore", StorageType.Ore)
+                .AddSorter("Cargo_Sorter")
+                .AddCache("Cargo_Cache")
+                .AddThrower("Cargo_Thrower", new string[] { "Stone" })
+                .AddAssembler("Cargo_Assembler", true)
+                .AddRefinery("Cargo_Refinery", true)
+                .Watch();
 
             // chybejici rudy
-            Display.Create("Panel_Missing", true)
+            new Display("Panel_Missing")
                 .Text()
                 .Clear()
                 .Medium()
@@ -63,27 +77,27 @@ namespace SpaceEngineers
                 .Table(crg.GetMissing());
 
             // status skladu
-            Display.Create("Panel_Cargo")
+            new Display("Panel_Cargo")
                 .Text()
                 .Clear()
                 .Small()
                 .White()
                 .Line("Component")
                 .Ruler()
-                .Lines(crg.GetComponentList())
+                .Lines(crg.GetComponentOverview())
                 .NewLine()
                 .NewLine()
                 .Line("Ingot")
                 .Ruler()
-                .Lines(crg.GetIngotList())
+                .Lines(crg.GetIngotOverview())
                 .NewLine()
                 .NewLine()
                 .Line("Ore")
                 .Ruler()
-                .Lines(crg.GetOreList());
+                .Lines(crg.GetOreOverview());
 
             // rafinacni status
-            Display.Create("Panel_Refinery")
+            new Display("Panel_Refinery")
                 .Text()
                 .Clear()
                 .Small()
@@ -92,25 +106,19 @@ namespace SpaceEngineers
                 .Table(crg.GetRefineryOverview());
 
             // vyrobni status
-            bool stucked;
-            TableData table = crg.GetAssemblesOverview(out stucked);
-            Display.Create("Panel_Assembler")
+            new Display("Panel_Assembler")
                 .Text()
                 .Clear()
                 .Small()
                 .Line("Assembler status")
                 .Ruler()
-                .Table(table)
-                .Alert(stucked);
+                .Table(crg.GetAssemblesOverview())
+                .Alert(crg.GetAssemblesStucked());
 
             // kokpit
             // Cargo crg2 = new Cargo("Cargo");
             // Debugger.Log("ore", crg2.GetOreList());
             // Display.Create("Panel_Drill").Cocpit().Clear().Large().Lines(crg2.GetOreList(true));
-
-
-
-            // ReferenceEquals na rudy200k
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿
-
-using Sandbox.ModAPI.Ingame;
-using SpaceEngineers.Game.ModAPI.Ingame;
+﻿using Sandbox.ModAPI.Ingame;
+using System;
 using System.Collections.Generic;
+using VRage;
+using VRage.Game;
 using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineers
@@ -12,87 +12,82 @@ namespace SpaceEngineers
     /// </summary> 
     class Power
     {
-        /// <summary> 
-        /// Referencni hodnota uranu v reaktoru 
-        /// </summary> 
-        private int UraniumReference = 0;
-
         /// <summary>
         /// Instance
         /// </summary>
-        private readonly Block Instance = null;
+        private readonly Group current = null;
+
+        /// <summary>
+        /// Objekt svetla
+        /// </summary>
+        private Light light = null;
+
+        /// <summary>
+        /// Reference mnozstvi uranu
+        /// </summary>
+        private double reference = 0;
+
+        /// <summary>
+        /// Status
+        /// </summary>
+        private readonly List<string> status = new List<string>();
 
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Power(string block)
+        /// <param name="group">Blok</param>
+        public Power(string group)
         {
-            Instance = new Block(block);
+            current = new Group(group);
         }
 
-        /// <summary> 
-        /// Nastaveni referencni hodnoty uranu v reaktoru 
-        /// </summary> 
-        /// <param name="reference">Referencni hodnota</param> 
-        /// <returns>Power</returns> 
-        public Power SetUraniuReference(int reference)
+        /// <summary>
+        /// Nastaveni referencni hodnoty uranu
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
+        public Power SetUraniuReference(double amount)
         {
-            UraniumReference = reference;
+            reference = amount;
             return this;
         }
 
         /// <summary> 
-        /// Status generatoru 
+        /// Status energetickych zdroju
         /// </summary> 
         /// <returns></returns> 
-        public List<string> GetReactorStatus()
+        public List<string> GetStatus()
         {
-            // definice
-            List<string> status = new List<string>();
+            // ocista
+            status.Clear();
             //prochazeni bloku 
-            foreach (KeyValuePair<string, IMyReactor> block in Instance.GetByType<IMyReactor>())
+            foreach (var block in current)
             {
-                //hodnoty
-                IMyReactor reactor = block.Value as IMyReactor;
-                float actual = reactor.CurrentOutput;
-                float maximum = reactor.MaxOutput;
-                float uranium = 0;
-                //overeni funkcnosti 
-                if (reactor.IsFunctional && reactor.IsWorking)
+                if (block.Is<IMyBatteryBlock>())
                 {
-                    //overeni mnozstvi uranu 
-                    if (UraniumReference > 0)
-                    {
-                        // polozky inventare
-                        List<MyInventoryItem> items = new List<MyInventoryItem>();
-                        reactor.GetInventory(0).GetItems(items);
-                        // vypocet mnozstvi uranu 
-                        if (items.Count > 0)
-                        {
-                            for (int j = 0; j < items.Count; j++)
-                            {
-                                if (items[j].Type.SubtypeId == "Uranium")
-                                {
-                                    uranium += (float)items[j].Amount;
-                                }
-                            }
-                        }
-                        // doplneni statusu do vystupu
-                        status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, uranium <= UraniumReference ? Status.UraniumIsLow : Status.Working), actual, maximum));
-                    }
-                    else
-                    {
-                        status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.UraniumIsEmpty), 0, maximum));
-                    }
+                    ReadBattery(block);
                 }
-                else
+                else if (block.Is<IMyPowerProducer>())
                 {
-                    status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.NotWorking), 0, maximum));
+                    ReadProducer(block);
+                } else
+                {
+                    throw new Exception("E-PW-01: Block '" + block.Name + "' is neither PowerProducer or Battery");
                 }
             }
-            // vraceni 
+            // vraceni
             return status;
+        }
+
+        /// <summary>
+        /// Pridani svetelne signalizace
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public Power AddFailsafeLight(string name)
+        {
+            light = new Light(name);
+            return this;
         }
 
         /// <summary> 
@@ -101,122 +96,113 @@ namespace SpaceEngineers
         /// <returns>Power</returns> 
         public Power EnableBatteryFailsafe()
         {
-            //overeni provoyu reaktoru 
-            int reactorFailed = 0;
-            int reactorCount = 0;
-            foreach (KeyValuePair<string, IMyReactor> block in Instance.GetByType<IMyReactor>())
+            // definice
+            int producerFailed = 0;
+            int producerCount = 0;
+            //overeni provozu producentu energie
+            foreach (var block in current.Only<IMyPowerProducer>())
             {
-                reactorCount++;
-                if (!block.Value.IsFunctional || !block.Value.IsWorking)
+                producerCount++;
+                if (!block.IsWorking)
                 {
-                    reactorFailed++;
+                    producerFailed++;
                 }
             }
             //pokud reaktor selhal pripnou se baterky a spusti poplach jinak se vse vypne 
-            if (reactorFailed == reactorCount)
+            if (producerFailed == producerCount)
             {
                 // prepnuti baterek na vybijeni
-                Instance.SetValue<IMyBatteryBlock, long>("ChargeMode", 2);
+                current.SetValue<IMyBatteryBlock, long>("ChargeMode", 2);
                 // vystrazne svetlo
-                if (Instance.Exist<IMyInteriorLight>())
+                if (light != null)
                 {
-                    Light.Create(Instance)
+                    light
                        .Blink(1)
                        .Red()
                        .Intensity(5)
                        .On();
                 }
-                // vystrazny zvuk
-                if (Instance.Exist<IMySoundBlock>())
-                {
-                    Sound.Create(Instance)
-                        .Play();
-                }
             }
             else
             {
                 // prepnuti baterek na nabijeni
-                Instance.SetValue<IMyBatteryBlock, long>("ChargeMode", 1);
-                // zastaveni zvuku
-                Instance.Action<IMySoundBlock>("StopSound");
+                current.SetValue<IMyBatteryBlock, long>("ChargeMode", 1);
                 // vypnuti vystrazneho svetla
-                Instance.Action<IMyInteriorLight>("OnOff_Off");
+                if (light != null)
+                {
+                    light.Off();
+                }
             }
             //vraceni 
             return this;
         }
 
-        /// <summary> 
-        /// Status baterek 
-        /// </summary> 
-        /// <returns></returns> 
-        public List<string> GetBatteryStatus()
+        /// <summary>
+        /// Nacteni stavu baterky
+        /// </summary>
+        /// <param name="block"></param>
+        private void ReadBattery(Block block)
         {
             // definice
-            List<string> status = new List<string>();
-            //prochazeni bloku 
-            foreach (KeyValuePair<string, IMyBatteryBlock> block in Instance.GetByType<IMyBatteryBlock>())
+            var battery = block.As<IMyBatteryBlock>();
+            // hodnoty 
+            float input = battery.CurrentInput;
+            float output = battery.CurrentOutput;
+            float stored = battery.CurrentStoredPower;
+            float maximum = battery.MaxStoredPower;
+            // overeni funkcnosti
+            if (block.IsWorking)
             {
-                // hodnoty 
-                float input = block.Value.CurrentInput;
-                float output = block.Value.CurrentOutput;
-                float stored = block.Value.CurrentStoredPower;
-                float maximum = block.Value.MaxStoredPower;
-                // overeni funkcnosti
-                if (block.Value.IsFunctional && block.Value.IsWorking)
+                if (stored == maximum)
                 {
-                    if (stored == maximum)
-                    {
-                        status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.FullyCharged), stored, maximum));
-                    }
-                    else if (input > output)
-                    {
-                        status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.Recharging), stored, maximum));
-                    }
-                    else
-                    {
-                        status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.Discharging), stored, maximum));
-                    }
+                    status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.FullyCharged), stored, maximum));
+                }
+                else if (input > output)
+                {
+                    status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.Recharging), stored, maximum));
                 }
                 else
                 {
-                    status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value, Status.NotWorking), 0, maximum));
+                    status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.Discharging), stored, maximum));
                 }
             }
-            // zadne baterky
-            if (status.Count == 0)
+            else
             {
-                status.Add(Status.NoBatteries);
+                status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.NotWorking), 0, maximum));
             }
-            // vraceni
-            return status;
         }
 
-        /// <summary> 
-        /// Status solarnich panelu 
-        /// </summary> 
-        /// <param name="groupedName">Nazev pro seskupeni</param> 
-        /// <returns></returns> 
-        public List<string> GetSolarStatus()
+        /// <summary>
+        /// Nacteni stavu generatoru
+        /// </summary>
+        /// <param name="block"></param>
+        private void ReadProducer(Block block)
         {
-            // definice
-            List<string> status = new List<string>();
-            //prochazeni bloku 
-            foreach (KeyValuePair<string, IMySolarPanel> block in Instance.GetByType<IMySolarPanel>())
+            // generator
+            var producer = block.As<IMyPowerProducer>();
+            // hodnoty 
+            float actual = producer.CurrentOutput;
+            float maximum = producer.MaxOutput;
+            // reaktor (kontrola uranu
+            if (block.Is<IMyReactor>())
             {
-                // hodnoty 
-                float actual = block.Value.CurrentOutput;
-                float maximum = block.Value.MaxOutput;
-                // overeni funkcnosti
-                status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value), actual, maximum));
+                // definice
+                var items = Tools.GetInventoryInfo(block.As<IMyReactor>().GetInventory(0));
+                var uranium = items.GetValueOrDefault("Uranium", (0, -1)).Amount;
+                // kontrola mnozstvi uranu
+                if (uranium > 0)
+                {
+                    status.Add(Formater.BarsWithPercent(Formater.Status(block, uranium < reference ? Status.UraniumIsLow : Status.Working), actual, maximum));
+                }
+                else
+                {
+                    status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.UraniumIsEmpty), 0, maximum));
+                }
             }
-            // zadne panely
-            if (status.Count == 0)
+            else
             {
-                status.Add(Status.NoSolarPanels);
+                status.Add(Formater.BarsWithPercent(Formater.Status(block, Status.Working), actual, maximum));
             }
-            // vraceni
-            return status;
         }
     }
 }

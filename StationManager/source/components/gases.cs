@@ -1,5 +1,8 @@
 ﻿using Sandbox.ModAPI.Ingame;
+using System;
 using System.Collections.Generic;
+using VRage;
+using VRage.Game;
 using VRage.Game.ModAPI.Ingame;
 
 namespace SpaceEngineers
@@ -9,91 +12,63 @@ namespace SpaceEngineers
     /// </summary> 
     class Gases
     {
-        /// <summary> 
-        /// Referencni mnozstvi ledu 
-        /// </summary> 
-        private int IceReference = 0;
-
         /// <summary>
         /// Instance
         /// </summary>
-        private readonly Block Instance = null;
+        private readonly Group current = null;
+
+        /// <summary>
+        /// Reference mnozstvi uranu
+        /// </summary>
+        private double reference = 0;
 
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Gases(string block)
+        /// <param name="group">Blok</param>
+        public Gases(string group)
         {
-            Instance = new Block(block);
+            current = new Group(group);
+        }
+
+
+        /// <summary>
+        /// Nastaveni referencni hodnoty ledu
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
+        public Gases SetIceReference(double amount)
+        {
+            reference = amount;
+            return this;
         }
 
         /// <summary> 
-        /// Stav zasobnikuplynu
+        /// Stav zasobniku plynu
         /// </summary> 
         /// <returns>Stav zasobniku</returns> 
-        public List<string> GetTankStatus()
+        public List<string> GetStatus()
         {
             // definice
             List<string> status = new List<string>();
             // prochazeni bloku
-            foreach (KeyValuePair<string, IMyGasTank> block in Instance.GetByType<IMyGasTank>())
+            foreach (var block in current)
             {
-                status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value), (block.Value as IMyGasTank).FilledRatio, 1));
-            }
-            return status;
-
-        }
-
-        /// <summary> 
-        /// Mnozstvi ledu v generatoru
-        /// </summary> 
-        /// <returns></returns> 
-        public List<string> GetIceStatus()
-        {
-            // definice
-            List<string> status = new List<string>();
-            // prochazeni bloku
-            foreach (KeyValuePair<string, IMyGasGenerator> block in Instance.GetByType<IMyGasGenerator>())
-            {
-                // definice
-                List<MyInventoryItem> items = new List<MyInventoryItem>();
-                float total = 0;
-                // nacteni polozek v inventari
-                block.Value.GetInventory(0).GetItems(items);
-                // vypocet celkoveho mnozstvi
-                if (items.Count > 0)
+                if (block.Is<IMyGasGenerator>())
                 {
-                    for (int j = 0; j < items.Count; j++)
-                    {
-                        if (items[j].Type.SubtypeId == "Ice")
-                        {
-                            total += (float)items[j].Amount;
-                        }
-                    }
+                    var items = Tools.GetInventoryInfo(block.As<IMyGasGenerator>().GetInventory(0));
+                    status.Add(Formater.BarsWithPercent(block.Name, items.GetValueOrDefault("Ice", (0, -1)).Amount, reference));
                 }
-                // status
-                if (block.Value.IsWorking && block.Value.IsFunctional)
+                else if (block.Is<IMyGasTank>())
                 {
-                    status.Add(Formater.BarsWithPercent(Block.GetStatus(block.Value), total, IceReference));
+                    status.Add(Formater.BarsWithPercent(block.Name, block.As<IMyGasTank>().FilledRatio, 1));
+                }
+                else
+                {
+                    throw new Exception("E-GA-01: Block '" + block.Name + "' is neither GasTank or GasGenerator");
                 }
             }
-            // vraceni
             return status;
-        }
-
-        /// <summary> 
-        /// Nastaveni referencniho mnozstvi ledu 
-        /// </summary> 
-        /// <param name="reference">Referencni mnozstvi</param> 
-        /// <returns></returns> 
-        public Gases SetIceReference(int reference)
-        {
-            if (reference > 0)
-            {
-                IceReference = reference;
-            }
-            return this;
         }
     }
 }

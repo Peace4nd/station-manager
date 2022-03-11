@@ -5,31 +5,13 @@ namespace SpaceEngineers
     /// <summary> 
     /// Reprak 
     /// </summary> 
-    class Sound
+    class Sound : Block
     {
-        /// <summary>
-        /// Instance
-        /// </summary>
-        private static Block Instance = null;
-
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Sound(Block block)
-        {
-            Instance = block;
-        }
-
-        /// <summary>
-        /// Staticky konstruktor
-        /// </summary>
         /// <param name="block"></param>
-        /// <returns></returns>
-        public static Sound Create(Block block)
-        {
-            return new Sound(block);
-        }
+        public Sound(string block) : base(block) { }
 
         /// <summary> 
         /// Zapnuti 
@@ -37,7 +19,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Sound Play()
         {
-            Instance.Action<IMySoundBlock>("PlaySound");
+            Action("PlaySound");
             return this;
         }
 
@@ -47,7 +29,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Sound Pause()
         {
-            Instance.Action<IMyInteriorLight>("StopSound");
+            Action("StopSound");
             return this;
         }
     }

@@ -1,43 +1,24 @@
 ﻿using Sandbox.ModAPI.Ingame;
-using System.Collections.Generic;
 
 namespace SpaceEngineers
 {
     /// <summary> 
     /// Dvere 
     /// </summary> 
-    class Door
+    class Door : Block
     {
-        /// <summary>
-        /// Instance
-        /// </summary>
-        private static Block Instance = null;
-
         /// <summary>
         /// Konstruktor
         /// </summary>
-        /// <param name="block">Blok</param>
-        public Door(Block block)
-        {
-            Instance = block;
-        }
-
-        /// <summary>
-        /// Staticky konstruktor
-        /// </summary>
         /// <param name="block"></param>
-        /// <returns></returns>
-        public static Door Create(Block block)
-        {
-            return new Door(block);
-        }
+        public Door(string block) : base(block) { }
 
         /// <summary> 
         /// Otevreni dveri 
         /// </summary> 
         public Door Open()
         {
-            Instance.Action<IMyDoor>("Open_On");
+            Action("Open_On");
             return this;
         }
 
@@ -46,7 +27,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Door Close()
         {
-            Instance.Action<IMyDoor>("Open_Off");
+            Action("Open_Off");
             return this;
         }
 
@@ -55,7 +36,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Door Lock()
         {
-            Instance.Action<IMyDoor>("OnOff_Off");
+            Action("OnOff_Off");
             return this;
         }
 
@@ -64,7 +45,7 @@ namespace SpaceEngineers
         /// </summary> 
         public Door Unlock()
         {
-            Instance.Action<IMyDoor>("OnOff_On");
+            Action("OnOff_On");
             return this;
         }
 
@@ -74,22 +55,7 @@ namespace SpaceEngineers
         /// <returns>Zavrene dvere</returns> 
         public bool IsClosed()
         {
-            // definice
-            int closed = 0;
-            // krokovani bloku
-            foreach (KeyValuePair<string, IMyDoor> block in Instance.GetByType<IMyDoor>())
-            {
-                if (block.Value.OpenRatio == 0)
-                {
-                    closed++;
-                }
-            }
-            // rozhodnuti o uzavreni
-            if (closed == Instance.Count)
-            {
-                return true;
-            }
-            return false;
+            return As<IMyDoor>().OpenRatio == 0;
         }
     }
 }
