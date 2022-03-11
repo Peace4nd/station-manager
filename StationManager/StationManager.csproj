@@ -115,6 +115,7 @@
   <ItemGroup>
     <Compile Include="source\components\airlock.cs" />
     <Compile Include="source\components\mine.cs" />
+    <Compile Include="source\primitives\sensor.cs" />
     <Compile Include="source\utility\group.cs" />
     <Compile Include="source\utility\block.cs" />
     <Compile Include="source\primitives\sound.cs" />
@@ -129,6 +130,8 @@
     <Compile Include="source\primitives\light.cs" />
     <Compile Include="source\primitives\ventilator.cs" />
     <Compile Include="source\utility\enums.cs" />
+    <Compile Include="source\utility\sensor-detect.cs" />
+    <Compile Include="source\utility\sensor-range.cs" />
     <Compile Include="source\utility\tools.cs" />
     <Compile Include="source\utility\debugger.cs" />
     <Compile Include="source\utility\formater.cs" />
